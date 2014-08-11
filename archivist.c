@@ -50,8 +50,111 @@ void init_key( struct index_key * key ){
 	key->micros = time.tv_usec % (1000 * 1000) ; // microseconds off the second
 }
 
+// for file/dir open, close and flags
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/file.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+// returns the fd of the locked directory, or -1 and an error is printed to stderr
+static int get_dir_lock( char* dir, int will_write ){
+
+	int fd_dir = open( dir, O_RDONLY );
+
+	if( fd_dir == -1 ){
+		fputs( strerror( errno ), stderr );
+		fputs("\nopen( dir ) failed\n", stderr);
+		return -1;
+	}
+
+	struct stat dir_data;
+
+	// ensure the directory exists + create it if it doesn't
+	int rc = fstat( fd_dir, &dir_data );
+
+	if( rc != 0 ){
+		fputs( strerror( errno ), stderr );
+		fputs("\nfstat( fd_dir, &dir_data ) failed\n", stderr);
+		return -1;
+	}
+
+	if( !S_ISDIR( dir_data.st_mode ) ){
+		fputs( "error: path provided was not a directory\n", stderr);
+		return -1;
+	}
+
+	int lock = LOCK_SH;
+	if( will_write ){
+		lock = LOCK_EX;
+	}
+
+	if( flock( fd_dir, lock ) ){
+		fputs( strerror( errno ), stderr );
+		fputs("\nflock( fd_dir, lock ) failed\n", stderr);
+		return -1;
+	}
+
+	return fd_dir;
+}
+
+// read, write and execute for the user
+#define FILE_PERMISSIONS ( S_IRUSR | S_IWUSR )
+
+// create a file
+static int create_file( char* dir, char* file ){
+	char buffer[256];
+
+	snprintf( buffer, sizeof(buffer), "%s/%s", dir, file );
+
+	int fd = creat( buffer, FILE_PERMISSIONS );
+
+	if( fd == -1 ){
+		return -1;
+	}
+
+	fd = close( fd );
+
+	if( fd == -1 ){
+		return -1;
+	}
+
+	return 0;
+}
+
 int init( int argc, char** argv ){
-	return 1;
+
+	char * dir = argv[2];
+
+	int rc = mkdir( dir, FILE_PERMISSIONS | S_IXUSR ); // all permissions to user, none to anyone else
+
+	if( rc != 0 ){
+		fputs( strerror( errno ), stderr );
+		fputs("\nmkdir( dir ) failed\n", stderr);
+		return -1;
+	}
+
+	int fd_dir = get_dir_lock( argv[2], 1 );
+
+	if( fd_dir == -1 ){
+		fputs("failed to grab directory lock\n", stderr);
+		return -1;
+	}
+
+	// create the index + data files
+	if( create_file( dir, "index" ) != 0 ){
+		fputs( strerror( errno ), stderr );
+		fputs("\nfailed to create index\n", stderr);
+		return -1;
+	}
+
+	if( create_file( dir, "data" ) != 0 ){
+		fputs( strerror( errno ), stderr );
+		fputs("\nfailed to create date\n", stderr);
+		return -1;
+	}
+
+	return 0;
 }
 
 int list( int argc, char** argv ){
@@ -78,7 +181,7 @@ static command_t commands[] = {
 
 int main(int argc, char** argv){
 
-	if( argc < 2 ){
+	if( argc < 3 ){
 		usage( argc, argv );
 		return 2;
 	}
