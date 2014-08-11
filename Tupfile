@@ -1,0 +1,8 @@
+
+CFLAGS += -Wall
+CFLAGS += -Werror
+
+!cc = |> gcc $(CFLAGS) -std=c99 -c %f -o %o |> %B.o
+
+: foreach *.c |> !cc |> 
+: *.o |> gcc %f -o %o |> archivist
