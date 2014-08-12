@@ -98,6 +98,10 @@ static int get_dir_lock( char* dir, int will_write ){
 	return fd_dir;
 }
 
+static int release_dir(int fd_dir){
+	return flock( fd_dir, LOCK_UN );
+}
+
 // read, write and execute for the user
 #define FILE_PERMISSIONS ( S_IRUSR | S_IWUSR )
 
@@ -153,6 +157,8 @@ int init( int argc, char** argv ){
 		fputs("\nfailed to create date\n", stderr);
 		return -1;
 	}
+
+	release_dir( fd_dir );
 
 	return 0;
 }
