@@ -319,12 +319,6 @@ int append( int argc, char** argv ){
 		.length = 0, // only temporary
 	};
 
-	if( init_key( &entry.key ) == -1 ){
-		fputs( strerror( errno ), stderr );
-		fputs("\ninit_key( &entry.key ) failed\n", stderr);
-		return -1;
-	}
-
 	// copy stdin to the data, and get the entry length
 	rc = copy_fd( 0, fd, &entry.length );
 
@@ -337,6 +331,16 @@ int append( int argc, char** argv ){
 	// don't care if they error.
 	close( 0 ); // empty
 	close( fd ); // finished using
+
+	// TODO should this be before or after we insert the key?
+	//  that is, should it be closer to the index insertion, or the time
+	//  that we attempted to put the data into the store?
+	// finish key init, this step binds the time to the key.
+	if( init_key( &entry.key ) == -1 ){
+		fputs( strerror( errno ), stderr );
+		fputs("\ninit_key( &entry.key ) failed\n", stderr);
+		return -1;
+	}
 
 	// write the index entry
 	fd = open_file( dir, INDEX_FILE, 1 );
