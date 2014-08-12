@@ -104,10 +104,10 @@ static int release_dir(int fd_dir){
 
 // read, write and execute for the user
 #define FILE_PERMISSIONS ( S_IRUSR | S_IWUSR )
-
+#define BUFFER_SIZE 256
 // create a file
 static int create_file( char* dir, char* file ){
-	char buffer[256];
+	char buffer[ BUFFER_SIZE ];
 
 	snprintf( buffer, sizeof(buffer), "%s/%s", dir, file );
 
@@ -126,6 +126,9 @@ static int create_file( char* dir, char* file ){
 	return 0;
 }
 
+#define INDEX_FILE "index"
+#define DATA_FILE "data"
+
 int init( int argc, char** argv ){
 
 	char * dir = argv[2];
@@ -138,7 +141,7 @@ int init( int argc, char** argv ){
 		return -1;
 	}
 
-	int fd_dir = get_dir_lock( argv[2], 1 );
+	int fd_dir = get_dir_lock( dir, 1 );
 
 	if( fd_dir == -1 ){
 		fputs("failed to grab directory lock\n", stderr);
@@ -146,15 +149,15 @@ int init( int argc, char** argv ){
 	}
 
 	// create the index + data files
-	if( create_file( dir, "index" ) != 0 ){
+	if( create_file( dir, INDEX_FILE ) != 0 ){
 		fputs( strerror( errno ), stderr );
-		fputs("\nfailed to create index\n", stderr);
+		fputs("\nfailed to create " INDEX_FILE "\n", stderr);
 		return -1;
 	}
 
-	if( create_file( dir, "data" ) != 0 ){
+	if( create_file( dir, DATA_FILE ) != 0 ){
 		fputs( strerror( errno ), stderr );
-		fputs("\nfailed to create date\n", stderr);
+		fputs("\nfailed to create " DATA_FILE "\n", stderr);
 		return -1;
 	}
 
@@ -163,15 +166,87 @@ int init( int argc, char** argv ){
 	return 0;
 }
 
+static int open_index( char* dir, int will_write ){
+
+	char buffer[ BUFFER_SIZE ];
+	snprintf( buffer, sizeof(buffer), "%s/%s", dir, INDEX_FILE );
+
+	int flags = O_RDONLY;
+	if( will_write ){
+		flags = O_RDWR;
+	}
+
+	int fd = open( buffer, flags );
+
+	if( fd == -1 ){
+		fputs( strerror( errno ), stderr );
+		fputs("\nopen( index ) failed\n", stderr);
+		return -1;
+	}
+
+	return fd;
+}
+
+#include <time.h>
+
+static void print_key( struct index_key key ){
+	// figure out how to format the key
+
+	char buffer[1024];
+
+	struct tm * time = gmtime( (time_t*) &key.seconds );
+
+	// format the time
+	ssize_t pos = strftime( buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", time );
+
+	// append microseconds to it
+	pos = snprintf( buffer + pos, sizeof(buffer) - pos, ".%d", key.micros );
+
+	fputs( buffer, stdout );
+}
+
 int list( int argc, char** argv ){
-	return 1;
+	char * dir = argv[2];
+
+	int fd_dir = get_dir_lock( dir, 0 );
+
+	if( fd_dir == -1 ){
+		fputs("failed to grab directory lock\n", stderr);
+		return -1;
+	}
+
+	int fd = open_index( dir, 0 );
+
+	if( fd == -1 ){
+		fputs("failed to open index\n", stderr);
+		return -1;
+	}
+
+	struct index_entry current;
+
+	int rc = 0;
+
+	while( (rc = read( fd, &current, sizeof(current))) ){
+		if( rc != sizeof(current) ){
+			// what happens here?
+			// can this be ignored?
+			fputs("Index appears to be broken.\n", stderr);
+			return -1;
+		}
+		print_key( current.key );
+		fputs("\n", stdout);
+	}
+
+	return 0;
 }
 
 int get( int argc, char** argv ){
+	//char * dir = argv[2];
 	return 1;
 }
 
 int append( int argc, char** argv ){
+	//char * dir = argv[2];
 	return 1;
 }
 

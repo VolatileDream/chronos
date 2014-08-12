@@ -13,8 +13,8 @@ struct index_key {
 };
 
 struct index_entry {
-	uint64_t position;
-	uint64_t length;
+	uint32_t position;
+	uint32_t length;
 	struct index_key key;
 };
 
