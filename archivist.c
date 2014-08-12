@@ -202,7 +202,7 @@ static void print_key( struct index_key key ){
 	ssize_t pos = strftime( buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", time );
 
 	// append microseconds to it
-	pos = snprintf( buffer + pos, sizeof(buffer) - pos, ".%d", key.micros );
+	pos = snprintf( buffer + pos, sizeof(buffer) - pos, ".%06d", key.micros );
 
 	fputs( buffer, stdout );
 }
@@ -230,8 +230,8 @@ int list( int argc, char** argv ){
 
 	while( (rc = read( fd, &current, sizeof(current))) ){
 		if( rc != sizeof(current) ){
-			// what happens here?
-			// can this be ignored?
+			// TODO this probably should have been detected earlier
+			//  like when we attempted to write the first broken index
 			fputs("Index appears to be broken.\n", stderr);
 			return -1;
 		}
