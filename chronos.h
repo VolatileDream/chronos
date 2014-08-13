@@ -46,4 +46,7 @@ int release_dir( int fd );
 // returns an fd, or -1
 int open_file( char* dir, char* name, int will_write );
 
+// maximum length of the path
+#define PATH_BUFFER_SIZE 1024
+
 #endif /* __ARCHIVIST_H__ */
