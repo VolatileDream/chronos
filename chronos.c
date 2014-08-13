@@ -84,14 +84,6 @@ int open_file( char* dir, char* name, int will_write ){
 	return fd;
 }
 
-int get( int argc, char** argv ){
-	//char * dir = argv[2];
-
-	
-
-	return 1;
-}
-
 static command_t commands[] = {
 	{ .name = "--help", .func = &usage },
 	{ .name = "-h", .func = &usage },
