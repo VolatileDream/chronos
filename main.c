@@ -6,11 +6,11 @@
 int usage( int argc, char** argv ){
 	printf("usage: %s [init|list|get|append] \n\n", argv[0] );
 	
-	printf(" init directory [keysize] - initialize a log in the directory,"
+	printf(" init <directory>         - initialize a log in the directory,"
 			" with the desired keysize (default 128 bytes)\n");
-	printf(" list directory           - list all the keys in the log\n");
-	printf(" get directory key        - get the specified key in the log\n");
-	printf(" append directory         - append a value to the log\n");
+	printf(" list <directory>         - list all the keys in the log\n");
+	printf(" get <directory> key      - get the specified key in the log\n");
+	printf(" append <directory>       - append a value to the log\n");
 	
 	printf("\n");
 
@@ -27,7 +27,7 @@ static command_t commands[] = {
 	{ .name = "init", .func = &init },
 	{ .name = "list", .func = &list },
 	{ .name = "get", .func = &get },
-	{ .name = "submit", .func = &append },
+	{ .name = "append", .func = &append },
 };
 
 int main(int argc, char** argv){
