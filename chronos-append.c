@@ -67,7 +67,7 @@ int append( int argc, char** argv ){
 
 	// open and write data file first,
 	// then write the index update.
-	int fd = open_file( dir, DATA_FILE, 1 );
+	int fd = open_data( dir, 1 );
 
 	if( fd == -1 ){
 		fputs("failed to open data file\n", stderr);
@@ -115,7 +115,7 @@ int append( int argc, char** argv ){
 	}
 
 	// write the index entry
-	fd = open_file( dir, INDEX_FILE, 1 );
+	fd = open_index( dir, 1, NULL );
 
 	if( fd == -1 ){
 		fputs("failed to open index\n", stderr);

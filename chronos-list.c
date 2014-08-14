@@ -29,7 +29,7 @@ int list( int argc, char** argv ){
 		return -1;
 	}
 
-	int fd = open_file( dir, INDEX_FILE, 0 );
+	int fd = open_index( dir, 0, NULL );
 
 	if( fd == -1 ){
 		fputs("failed to open index\n", stderr);

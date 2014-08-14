@@ -63,7 +63,7 @@ int release_dir(int fd_dir){
 }
 
 
-int open_file( char* dir, char* name, int will_write ){
+static int open_file( char* dir, char* name, int will_write ){
 
 	char buffer[ PATH_BUFFER_SIZE ];
 	snprintf( buffer, sizeof(buffer), "%s/%s", dir, name );
@@ -82,6 +82,45 @@ int open_file( char* dir, char* name, int will_write ){
 	}
 
 	return fd;
+}
+
+int open_index( char* dir, int will_write, int * out_index_count ){
+	int fd = open_file( dir, INDEX_FILE, will_write );
+
+	if( fd == -1 ){
+		return -1;
+	}
+
+	// do a bunch of checks to ensure that the index is healthy
+
+	struct stat index_data;
+
+	// ensure the directory exists + create it if it doesn't
+	int rc = fstat( fd, &index_data );
+
+	if( rc != 0 ){
+		fputs( strerror( errno ), stderr );
+		fputs("\nfstat( fd_dir, &dir_data ) failed\n", stderr);
+		return -1;
+	}
+
+	if( index_data.st_size % sizeof(struct index_entry) != 0 ){
+		// this is a serious problem. how do we handle it?
+		fputs("Index size is bad not a multiple of sizeof(struct index_entry).\n", stderr);
+		return -1;
+	}
+
+	if( out_index_count != NULL ){
+		* out_index_count = index_data.st_size / sizeof( struct index_entry );
+	}
+
+	return fd;
+}
+
+int open_data( char* dir, int will_write ){
+	// this gets passed through because we have
+	// no fancy checks to do at this time. 
+	return open_file( dir, DATA_FILE, will_write );
 }
 
 static command_t commands[] = {

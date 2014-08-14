@@ -44,7 +44,9 @@ int release_dir( int fd );
 
 // TODO will_write should be boolean
 // returns an fd, or -1
-int open_file( char* dir, char* name, int will_write );
+int open_data( char* dir, int will_write );
+// optionally returns the # of entries in the index
+int open_index( char* dir, int will_write, int * out_entry_count );
 
 // maximum length of the path
 #define PATH_BUFFER_SIZE 1024
