@@ -51,4 +51,6 @@ int open_index( char* dir, int will_write, int * out_entry_count );
 // maximum length of the path
 #define PATH_BUFFER_SIZE 1024
 
+int format_key( char * str, int max, struct index_key * key );
+
 #endif /* __ARCHIVIST_H__ */

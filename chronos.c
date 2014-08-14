@@ -108,3 +108,25 @@ int open_data( char* dir, int will_write ){
 	return open_file( dir, DATA_FILE, will_write );
 }
 
+int format_key( char * buf, int max, struct index_key * key ){
+
+	struct tm * time = gmtime( (time_t*) key->seconds );
+
+	int strf_count = strftime( buf, max, "%Y-%m-%d %H:%M:%S", time );
+
+	if( strf_count == 0 ){
+		// not enough space, can't do anything about that, need a larger buffer
+		return 0;
+	}
+
+	// append microseconds to it
+	int sn_count = snprintf( buf + strf_count, max - strf_count, ".%06d", key->micros );
+
+	if( sn_count == 0 ){
+		// couldn't add the micros to the string
+		return 0;
+	}
+
+	return strf_count + sn_count;
+}
+

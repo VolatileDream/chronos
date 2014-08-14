@@ -17,5 +17,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+// for time
+#include <time.h>
 
 #endif /* __HEADERS_H__ */

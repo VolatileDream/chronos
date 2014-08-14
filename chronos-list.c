@@ -1,22 +1,12 @@
 #include "chronos.h"
 #include "headers.h"
 
-#include <time.h>
-
 static void print_key( struct index_key key ){
-	// figure out how to format the key
-
 	char buffer[1024];
 
-	struct tm * time = gmtime( (time_t*) &key.seconds );
-
-	// format the time
-	ssize_t pos = strftime( buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", time );
-
-	// append microseconds to it
-	pos = snprintf( buffer + pos, sizeof(buffer) - pos, ".%06d", key.micros );
-
-	fputs( buffer, stdout );
+	if( format_key( buffer, sizeof(buffer), & key ) != 0 ){
+		fputs( buffer, stdout );
+	}
 }
 
 int list( int argc, char** argv ){
