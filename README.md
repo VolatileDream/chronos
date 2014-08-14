@@ -13,5 +13,5 @@ Chronos is intended to be used in a scripted environment, and supports a few com
 * `chronos init <directory>` creates a new chronos log in the specified directory.
 * `chronos list <directory>` lists all of the times at which data was inserted into Chronos.
 * `chronos get <directory> <key>` retrieves a single key and writes it to stdout.
-* `chronos submit <directory>` inserts new data into the Chronos log, reading the data from stdin.
+* `chronos append <directory>` inserts new data into the Chronos log, reading the data from stdin.
 
