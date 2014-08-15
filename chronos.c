@@ -1,11 +1,8 @@
-// has to be first, otherwise we don't get strptime
-#define _XOPEN_SOURCE  // for strptime in time.h
-#define _BSD_SOURCE
-#include <time.h>
-
 #include "chronos.h"
 
 #include "headers.h"
+
+#include <time.h>
 
 // returns the fd of the locked directory, or -1 and an error is printed to stderr
 int lock_dir( char* dir, int will_write ){
