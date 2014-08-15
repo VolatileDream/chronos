@@ -1,5 +1,6 @@
 #ifndef __HEADERS_H__
 #define __HEADERS_H__
+
 // for the errno variable
 #include <errno.h>
 
@@ -16,8 +17,5 @@
 #include <sys/file.h>
 #include <fcntl.h>
 #include <unistd.h>
-
-// for time
-#include <time.h>
 
 #endif /* __HEADERS_H__ */

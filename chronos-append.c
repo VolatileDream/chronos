@@ -2,21 +2,21 @@
 
 #include "headers.h"
 
-// for gettimeofday
-#include <sys/time.h>
+// for clock_gettime
+#include <time.h>
 
 int init_key( struct index_key * key ){
 
-	struct timeval time;
+	struct timespec time;
 
-	int rc = gettimeofday( &time, NULL );
+	int rc = clock_gettime( CLOCK_REALTIME, &time );
 
 	if( rc == -1 ){
 		return -1;
 	}
 
 	key->seconds = time.tv_sec ;
-	key->micros = time.tv_usec % (1000 * 1000) ; // microseconds off the second
+	key->micros = time.tv_nsec % (1000 * 1000) ; // microseconds off the second
 
 	return 0;
 }

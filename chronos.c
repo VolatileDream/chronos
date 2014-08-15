@@ -1,3 +1,8 @@
+// has to be first, otherwise we don't get strptime
+#define _XOPEN_SOURCE  // for strptime in time.h
+#define _BSD_SOURCE
+#include <time.h>
+
 #include "chronos.h"
 
 #include "headers.h"
@@ -108,11 +113,13 @@ int open_data( char* dir, int will_write ){
 	return open_file( dir, DATA_FILE, will_write );
 }
 
+#define KEY_FORMAT "%Y-%m-%d %H:%M:%S"
+
 int format_key( char * buf, int max, struct index_key * key ){
 
-	struct tm * time = gmtime( (time_t*) key->seconds );
+	struct tm * time = gmtime( (time_t*) &key->seconds );
 
-	int strf_count = strftime( buf, max, "%Y-%m-%d %H:%M:%S", time );
+	int strf_count = strftime( buf, max, KEY_FORMAT, time );
 
 	if( strf_count == 0 ){
 		// not enough space, can't do anything about that, need a larger buffer
@@ -130,3 +137,56 @@ int format_key( char * buf, int max, struct index_key * key ){
 	return strf_count + sn_count;
 }
 
+#include <string.h>
+#include <stdlib.h>
+/*
+// taken from man 3 timegm, a nonstandard way to convert: struct tm -> time_t
+static time_t my_timegm(struct tm *tm){
+	time_t ret;
+	char *tz;
+
+	tz = getenv("TZ");
+	if (tz){
+		tz = strdup(tz);
+	}
+	setenv("TZ", "", 1);
+	tzset();
+	ret = mktime(tm);
+	if (tz) {
+		setenv("TZ", tz, 1);
+		free(tz);
+	} else {
+		unsetenv("TZ");
+	}
+	tzset();
+
+	return ret;
+}
+*/
+int parse_key( char * str, int length, struct index_key * out_key ){
+
+	struct tm time;
+
+	char * end_of_date = strptime( str, KEY_FORMAT, &time );
+
+	if( end_of_date == NULL ){
+		// this is a failure to parse the string
+		fputs("Error parsing key, date segment was invalid.\n", stderr);
+		return -1;
+	}
+
+	// convert to number of seconds since epoch
+	out_key->seconds = timegm( &time );
+
+	char * end;
+	// +1 because the start of the string will be a '.' 
+	out_key->micros = strtol( end_of_date + 1, &end, 10 );
+
+	if( *end != 0 ){ // check that strtol ate until the end of the string
+		// couldn't parse until the end of the string
+		fputs("Error parsing key, micros were invalid\n", stderr);
+		return -1;
+	}
+
+	return 0;
+}
