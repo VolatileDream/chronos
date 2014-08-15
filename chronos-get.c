@@ -18,10 +18,10 @@ int compare( struct index_key * key1, struct index_key * key2 ){
 	if( key1->seconds > key2->seconds ){
 		return 1;
 	}
-	if( key1->micros < key2->micros ){
+	if( key1->nanos < key2->nanos ){
 		return -1;
 	}
-	if( key1->micros > key2->micros ){
+	if( key1->nanos > key2->nanos ){
 		return 1;
 	}
 	return 0;
@@ -103,7 +103,7 @@ int get( int argc, char** argv ){
 		printf("failed to parse key: '%s'", argv[3] );
 		return -1;
 	}
-	//printf("key: { .seconds = %d, .micros = %d }", key.seconds, key.micros);
+	//printf("key: { .seconds = %d, .nanos = %d }", key.seconds, key.nanos);
 
 	int fd_dir = lock_dir( dir, 0 );
 

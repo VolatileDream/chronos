@@ -123,8 +123,8 @@ int format_key( char * buf, int max, struct index_key * key ){
 		return 0;
 	}
 
-	// append microseconds to it
-	int sn_count = snprintf( buf + strf_count, max - strf_count, ".%06d", key->micros );
+	// append nanoseconds to it
+	int sn_count = snprintf( buf + strf_count, max - strf_count, ".%06d", key->nanos );
 
 	if( sn_count == 0 ){
 		// couldn't add the micros to the string
@@ -177,11 +177,11 @@ int parse_key( char * str, int length, struct index_key * out_key ){
 
 	char * end;
 	// +1 because the start of the string will be a '.' 
-	out_key->micros = strtol( end_of_date + 1, &end, 10 );
+	out_key->nanos = strtol( end_of_date + 1, &end, 10 );
 
 	if( *end != 0 ){ // check that strtol ate until the end of the string
 		// couldn't parse until the end of the string
-		fputs("Error parsing key, micros were invalid\n", stderr);
+		fputs("Error parsing key, nanos were invalid\n", stderr);
 		return -1;
 	}
 

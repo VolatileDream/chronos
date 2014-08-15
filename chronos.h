@@ -9,7 +9,7 @@ struct index_header {
 
 struct index_key {
 	uint32_t seconds; // seconds past epoch
-	uint32_t micros; // microseconds past epoch, discounting seconds
+	uint32_t nanos; // nanoseconds past epoch, discounting seconds
 };
 
 struct index_entry {

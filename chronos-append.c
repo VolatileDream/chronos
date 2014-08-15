@@ -16,7 +16,7 @@ int init_key( struct index_key * key ){
 	}
 
 	key->seconds = time.tv_sec ;
-	key->micros = time.tv_nsec % (1000 * 1000) ; // microseconds off the second
+	key->nanos = time.tv_nsec ; // microseconds off the second
 
 	return 0;
 }
