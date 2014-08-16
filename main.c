@@ -4,17 +4,20 @@
 #include "headers.h"
 
 int usage( int argc, char** argv ){
-	printf("usage: %s [init|list|get|append] \n\n", argv[0] );
+	printf("usage: %s [init|list|get|append|iterate] \n\n", argv[0] );
 	
-	printf(" init <directory>         - initialize a log in the directory,"
-			" with the desired keysize (default 128 bytes)\n");
-	printf(" list <directory>         - list all the keys in the log\n");
-	printf(" get <directory> key      - get the specified key in the log\n");
-	printf(" append <directory>       - append a value to the log\n");
+	printf(" init <directory>                   - initialize a log in the directory\n" );
+	printf(" list <directory>                   - list all the keys in the log\n");
+	printf(" get <directory> key                - get the specified key in the log\n");
+	printf(" append <directory>                 - append a value to the log\n");
+	printf(" iterate <directory> <s1> <s2> <s3> - prints out all the entries\n");
 	
 	printf("\n");
 
 	printf("%s expects keys to parse to a date\n", argv[0]);
+	printf("iterate prints out keys and entries as follows:\n");
+	printf("    <s1>key<s2>entry<s3>\n");
+	printf(" if any/all of s1, s2, or s3 are omitted, the empty string is printed instead\n");
 	return 0;
 }
 
