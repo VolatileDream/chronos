@@ -28,6 +28,7 @@ static command_t commands[] = {
 	{ .name = "list", .func = &list },
 	{ .name = "get", .func = &get },
 	{ .name = "append", .func = &append },
+	{ .name = "iterate", .func = &iterate },
 };
 
 int main(int argc, char** argv){

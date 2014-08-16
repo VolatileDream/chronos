@@ -41,6 +41,7 @@ int init( int argc, char** argv);
 int append( int argc, char** argv);
 int get( int argc, char** argv);
 int list( int argc, char** argv);
+int iterate( int argc, char** argv );
 
 // TODO this should be a boolean
 int lock_dir( char* dir, int will_write );
