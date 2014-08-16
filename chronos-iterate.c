@@ -31,11 +31,13 @@ int iterate( int argc, char** argv ){
 	int rc;
 	while( (rc = read( fd_index, &cur_entry, sizeof(cur_entry))) ){
 		if( rc != sizeof(cur_entry) ){
-			// TODO this probably should have been detected earlier
-			//  like when we attempted to write the first broken index
-			fputs("Index appears to be broken.\n", stderr);
+			fputs("error reading index.\n", stderr);
 			return -1;
 		}
+		// this is likely to end up being monotonically increasing.
+		// however, is someone decides to be fancy and compact the data store
+		//  then we have to iterate the entries in this way, because it's what
+		//  is expected by the data store and index format.
 		lseek( fd_data, cur_entry.position, SEEK_SET );
 
 		int rc = write_out( fd_data, 1, cur_entry.length );

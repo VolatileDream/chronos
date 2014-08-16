@@ -34,9 +34,7 @@ int list( int argc, char** argv ){
 
 	while( (rc = read( fd, &current, sizeof(current))) ){
 		if( rc != sizeof(current) ){
-			// TODO this probably should have been detected earlier
-			//  like when we attempted to write the first broken index
-			fputs("Index appears to be broken.\n", stderr);
+			fputs("error reading index.\n", stderr);
 			return -1;
 		}
 		print_key( current.key );
