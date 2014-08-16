@@ -3,6 +3,13 @@
 
 #include <stdint.h>
 
+// min macro from: https://stackoverflow.com/questions/3437404/min-and-max-in-c
+#define min(a,b) \
+   ({ __typeof__ (a) _a = (a); \
+       __typeof__ (b) _b = (b); \
+     _a < _b ? _a : _b; })
+
+
 struct index_header {
 	// does this need anything?
 };
@@ -53,5 +60,7 @@ int open_index( char* dir, int will_write, int * out_entry_count );
 
 int format_key( char * str, int max, struct index_key * key );
 int parse_key( char * str, int length, struct index_key * out_key );
+
+int write_out( int fd_in, int fd_out, int count );
 
 #endif /* __ARCHIVIST_H__ */

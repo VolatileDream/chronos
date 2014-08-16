@@ -134,32 +134,6 @@ int format_key( char * buf, int max, struct index_key * key ){
 	return strf_count + sn_count;
 }
 
-#include <string.h>
-#include <stdlib.h>
-/*
-// taken from man 3 timegm, a nonstandard way to convert: struct tm -> time_t
-static time_t my_timegm(struct tm *tm){
-	time_t ret;
-	char *tz;
-
-	tz = getenv("TZ");
-	if (tz){
-		tz = strdup(tz);
-	}
-	setenv("TZ", "", 1);
-	tzset();
-	ret = mktime(tm);
-	if (tz) {
-		setenv("TZ", tz, 1);
-		free(tz);
-	} else {
-		unsetenv("TZ");
-	}
-	tzset();
-
-	return ret;
-}
-*/
 int parse_key( char * str, int length, struct index_key * out_key ){
 
 	struct tm time;
@@ -183,6 +157,38 @@ int parse_key( char * str, int length, struct index_key * out_key ){
 		// couldn't parse until the end of the string
 		fputs("Error parsing key, nanos were invalid\n", stderr);
 		return -1;
+	}
+
+	return 0;
+}
+
+int write_out( int fd_in, int fd_out, int count ){
+	char buffer[1024];
+
+	while( count > 0 ){
+		int size = min( sizeof(buffer), count );
+
+		int read_count = read( fd_in, buffer, size );
+
+		if( read_count == -1 ){
+			fputs( strerror( errno ), stderr );
+			fputs("\nread from data failed\n", stderr);
+			return -1;
+		}
+
+		int wrote = 0;
+
+		while( wrote < read_count ){
+			int rc = write( fd_out, buffer + wrote, read_count - wrote );
+			if( rc == -1 ){
+				fputs( strerror( errno ), stderr );
+				fputs("\nread from data failed\n", stderr);
+				return -1;
+			}
+			wrote += rc;
+		}
+
+		count -= read_count;
 	}
 
 	return 0;

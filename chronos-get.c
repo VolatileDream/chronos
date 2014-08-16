@@ -5,12 +5,6 @@
 // for mmap stuff
 #include <sys/mman.h>
 
-// min macro from: https://stackoverflow.com/questions/3437404/min-and-max-in-c
-#define min(a,b) \
-   ({ __typeof__ (a) _a = (a); \
-       __typeof__ (b) _b = (b); \
-     _a < _b ? _a : _b; })
-
 int compare( struct index_key * key1, struct index_key * key2 ){
 	if( key1->seconds < key2->seconds ){
 		return -1;
@@ -53,38 +47,6 @@ int find2( struct index_entry * entries, struct index_key * key, int start, int 
 
 int find( struct index_entry * entries, struct index_key * key, int count ){
 	return find2( entries, key, 0, count, count );
-}
-
-int write_out( int fd_in, int fd_out, int count ){
-	char buffer[1024];
-
-	while( count > 0 ){
-		int size = min( sizeof(buffer), count );
-
-		int read_count = read( fd_in, buffer, size );
-
-		if( read_count == -1 ){
-			fputs( strerror( errno ), stderr );
-			fputs("\nread from data failed\n", stderr);
-			return -1;
-		}
-
-		int wrote = 0;
-
-		while( wrote < read_count ){
-			int rc = write( fd_out, buffer + wrote, read_count - wrote );
-			if( rc == -1 ){
-				fputs( strerror( errno ), stderr );
-				fputs("\nread from data failed\n", stderr);
-				return -1;
-			}
-			wrote += rc;
-		}
-
-		count -= read_count;
-	}
-
-	return 0;
 }
 
 int get( int argc, char** argv ){
