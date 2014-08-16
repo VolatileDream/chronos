@@ -1,6 +1,6 @@
 # Chronos
 
-Chronos is a zero dependency event log that was designed to be scriptable. It supports the operations of appending, retrieving a single key, and iterating over all of the entries efficiently.
+Chronos is a zero dependency event log that handles arbitrary binary data and is designed to be used in shell scripts. It supports the operations of appending, retrieving a single key, and iterating over all of the entries efficiently.
 
 Note that Chronos builds with `gcc -D_GNU_SOURCE` which may not be supported on all platforms. This flag is used to avoid writing a fair amount of code to do string scanning, and time structure manipulation. If you find an unsupported platform create an issue, if you also write a patch, please send a pull request.
 
