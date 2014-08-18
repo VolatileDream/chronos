@@ -1,9 +1,13 @@
 
 #include "chronos.h"
 
-#include "headers.h"
+// printf
+#include <stdio.h>
 
-int usage( int argc, char** argv ){
+// strncmp
+#include <string.h>
+
+static int usage( int argc, char** argv ){
 	printf("usage: %s [init|list|get|append|iterate] \n\n", argv[0] );
 	
 	printf(" init <directory>                   - initialize a log in the directory\n" );
@@ -21,17 +25,42 @@ int usage( int argc, char** argv ){
 	return 0;
 }
 
+static int init( int argc, char** argv ){
+
+	char * dir = argv[2];
+
+	struct chronos_handle handle;
+
+	int rc = chronos_open( dir, cs_read_only | cs_create, & handle );
+
+	if( rc != 0 ){
+		return rc;
+	}
+
+	chronos_close( & handle );
+
+	return 0;
+}
+
 // commands for the cli interface
+typedef int (*command_func)( int argc, char** argv );
+
+typedef struct command_t {
+       const char* name;
+       const command_func func;
+} command_t;
 
 static command_t commands[] = {
 	{ .name = "--help", .func = &usage },
 	{ .name = "-h", .func = &usage },
 	{ .name = "?", .func = &usage },
 	{ .name = "init", .func = &init },
+/*
 	{ .name = "list", .func = &list },
 	{ .name = "get", .func = &get },
 	{ .name = "append", .func = &append },
 	{ .name = "iterate", .func = &iterate },
+*/
 };
 
 int main(int argc, char** argv){
