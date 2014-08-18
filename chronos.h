@@ -60,6 +60,9 @@ int chronos_open( const char * dir, enum chronos_flags flags, struct chronos_han
 //	* -1 on error, errno will be set to the last error that occured.
 int chronos_close( struct chronos_handle * handle );
 
+// Get data about the chronos event log
+int chronos_stat( struct chronos_handle * handle, int * out_entry_count, int * out_data_size );
+
 #include <stdint.h>
 
 // min macro from: https://stackoverflow.com/questions/3437404/min-and-max-in-c
@@ -82,12 +85,11 @@ struct index_entry {
 // Outputs the given entry out to the specified file descriptor.
 int chronos_output( struct chronos_handle * handle, struct index_entry * entry, int fd_out );
 
-/*
+
 // Searches the chronos event log for the specified key
-// Returns:
-//	* 0 if an entry exists for the key, and fills out_entry with the entry.
 int chronos_find( struct chronos_handle * handle, struct index_key * search_key, struct index_entry * out_entry );
 
+/*
 int chronos_list( struct chronos_handle * handle, ... );
 */
 

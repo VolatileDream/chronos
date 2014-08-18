@@ -8,9 +8,10 @@
 #include <string.h>
 
 static int usage( int argc, char** argv ){
-	printf("usage: %s [init|list|get|append|iterate] \n\n", argv[0] );
+	printf("usage: %s [init|count|list|get|append|iterate] \n\n", argv[0] );
 	
 	printf(" init <directory>                   - initialize a log in the directory\n" );
+	printf(" count <directory>                  - prints the number of entries in the log\n");
 	printf(" list <directory>                   - list all the keys in the log\n");
 	printf(" get <directory> key                - get the specified key in the log\n");
 	printf(" append <directory>                 - append a value to the log\n");
@@ -34,10 +35,38 @@ static int init( int argc, char** argv ){
 	int rc = chronos_open( dir, cs_read_only | cs_create, & handle );
 
 	if( rc != 0 ){
+		perror("chronos_open");
 		return rc;
 	}
 
 	chronos_close( & handle );
+
+	return 0;
+}
+
+static int count( int argc, char** argv ){
+
+	char * dir = argv[2];
+
+	struct chronos_handle handle;
+
+	int rc = chronos_open( dir, cs_read_only | cs_create, & handle );
+
+	if( rc != 0 ){
+		perror("chronos_open");
+		return rc;
+	}
+
+	int count;
+	rc = chronos_stat( & handle, & count, NULL );
+	if( rc != 0 ){
+		perror("chronos_stat");
+		return rc;
+	}
+
+	chronos_close( & handle );
+
+	printf("%d\n", count );
 
 	return 0;
 }
@@ -55,6 +84,7 @@ static command_t commands[] = {
 	{ .name = "-h", .func = &usage },
 	{ .name = "?", .func = &usage },
 	{ .name = "init", .func = &init },
+	{ .name = "count", .func = &count },
 /*
 	{ .name = "list", .func = &list },
 	{ .name = "get", .func = &get },

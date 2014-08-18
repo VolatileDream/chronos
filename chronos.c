@@ -209,6 +209,8 @@ static int require_open_file( struct chronos_handle * handle, enum chronos_file 
 		if( fd == -1 ){
 			return C_FILE_OPEN_FAILED;
 		}
+
+		*fd_ptr = fd;
 	}
 
 	return 0;
@@ -317,6 +319,68 @@ int chronos_output( struct chronos_handle * handle, struct index_entry * entry, 
 	lseek( handle->data_fd, entry->position, SEEK_SET );
 
 	return write_out( handle->data_fd, fd_out, entry->length );
+}
+
+int chronos_stat( struct chronos_handle * handle, int * out_entry_count, int * out_data_size ){
+
+	// neither of these fstat commands should fail,
+	// not if the accompanying open worked. But we assume
+	// that they might, and handle it.
+	if( out_entry_count != NULL ){
+
+		int rc = require_open_file( handle, cf_index, cs_read_only );
+		if( rc != 0 ){
+			return rc;
+		}
+
+		struct stat stat_buf;
+
+		rc = fstat( handle->index_fd, & stat_buf );
+		if( rc != 0 ){
+			return C_READ_ERROR;
+		}
+
+		*out_entry_count = stat_buf.st_size / sizeof(struct index_entry);
+	}
+
+	if( out_data_size != NULL ){
+
+		int rc = require_open_file( handle, cf_data_store, cs_read_only );
+		if( rc != 0 ){
+			return rc;
+		}
+
+		struct stat stat_buf;
+
+		rc = fstat( handle->index_fd, & stat_buf );
+		if( rc != 0 ){
+			return C_READ_ERROR;
+		}
+
+		*out_data_size = stat_buf.st_size;
+	}
+
+	return 0;
+}
+
+#include <sys/mman.h>
+
+int chronos_find( struct chronos_handle * handle, struct index_key * key, struct index_entry * out_entry ){
+
+	int rc = require_open_file( handle, cf_index, cs_read_only );
+	if( rc != 0 ){
+		return rc;
+	}
+
+	int entry_count;
+	rc = chronos_stat( handle, & entry_count, NULL );
+
+/*
+	void* mem_ptr = mmap( NULL // suggested offset
+				, entry_count * sizeof(struct index_entry)
+*/
+
+	return -1;
 }
 
 #include <time.h>
