@@ -13,6 +13,8 @@
 #define C_READ_ERROR 8
 #define C_WRITE_ERROR 9
 
+#define C_NOT_FOUND 10
+
 enum chronos_flags {
 	cs_read_only	= 0x1,
 	cs_read_write	= 0x2,

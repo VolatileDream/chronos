@@ -1,4 +1,5 @@
 #include "chronos.h"
+#include "chronos-internal.h"
 
 // errno
 #include <errno.h>
@@ -119,7 +120,7 @@ static int require_directory( const char * dir, enum chronos_flags flags, int * 
 	return 0;
 }
 
-static int get_dir_lock( struct chronos_handle * handle ){
+int get_dir_lock( struct chronos_handle * handle ){
 	int lock_flags = LOCK_SH;
 	if( handle->state & cs_read_write ){
 		lock_flags = LOCK_EX;
@@ -131,7 +132,7 @@ static int get_dir_lock( struct chronos_handle * handle ){
 	return 0;
 }
 
-static int write_out( int fd_in, int fd_out, int count ){
+int write_out( int fd_in, int fd_out, int count ){
 	char buffer[1024];
 
 	while( count > 0 ){
@@ -159,12 +160,7 @@ static int write_out( int fd_in, int fd_out, int count ){
 	return 0;
 }
 
-enum chronos_file {
-	cf_index,
-	cf_data_store,
-};
-
-static int require_open_file( struct chronos_handle * handle, enum chronos_file file, enum chronos_flags flag ){
+int require_open_file( struct chronos_handle * handle, enum chronos_file file, enum chronos_flags flag ){
 
 	int * fd_ptr = NULL;
 	char * file_name = NULL;
@@ -361,26 +357,6 @@ int chronos_stat( struct chronos_handle * handle, int * out_entry_count, int * o
 	}
 
 	return 0;
-}
-
-#include <sys/mman.h>
-
-int chronos_find( struct chronos_handle * handle, struct index_key * key, struct index_entry * out_entry ){
-
-	int rc = require_open_file( handle, cf_index, cs_read_only );
-	if( rc != 0 ){
-		return rc;
-	}
-
-	int entry_count;
-	rc = chronos_stat( handle, & entry_count, NULL );
-
-/*
-	void* mem_ptr = mmap( NULL // suggested offset
-				, entry_count * sizeof(struct index_entry)
-*/
-
-	return -1;
 }
 
 #include <time.h>
