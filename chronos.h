@@ -18,7 +18,7 @@
 enum chronos_flags {
 	cs_read_only	= 0x1,
 	cs_read_write	= 0x2,
-	cs_create	= 0x4, // create the 
+	cs_create	= 0x4, // create the directory + files if required.
 };
 
 struct chronos_handle {

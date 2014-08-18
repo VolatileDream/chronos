@@ -98,7 +98,9 @@ static int get( int argc, char** argv ){
 
 	rc = chronos_find( & handle, & key, & entry );
 	if( rc != 0 ){
-		perror("chronos_find");
+		if( rc != C_NOT_FOUND ){
+			perror("chronos_find");
+		}
 		return rc;
 	}
 
@@ -113,6 +115,7 @@ static int get( int argc, char** argv ){
 
 	return 0;
 }
+
 
 // commands for the cli interface
 typedef int (*command_func)( int argc, char** argv );
@@ -129,9 +132,9 @@ static command_t commands[] = {
 	{ .name = "init", .func = &init },
 	{ .name = "count", .func = &count },
 	{ .name = "get", .func = &get },
+//	{ .name = "append", .func = &append },
 /*
 	{ .name = "list", .func = &list },
-	{ .name = "append", .func = &append },
 	{ .name = "iterate", .func = &iterate },
 */
 };
