@@ -1,6 +1,18 @@
 #ifndef __CHRONOS_H__
 #define __CHRONOS_H__
 
+// The Chronos return codes
+
+#define C_BAD_READ_WRITE_ARG 1
+#define C_NO_LOG_NO_CREATE 2
+#define C_LOOKUP_FAILED 3
+#define C_CREATE_FAILED 4
+#define C_LOCK_FAILED 5
+#define C_MEMORY_ALLOC_FAILED 6
+#define C_FILE_OPEN_FAILED 7
+#define C_READ_ERROR 8
+#define C_WRITE_ERROR 9
+
 enum chronos_flags {
 	cs_read_only	= 0x1,
 	cs_read_write	= 0x2,
@@ -8,6 +20,7 @@ enum chronos_flags {
 };
 
 struct chronos_handle {
+	char * directory;
 	enum chronos_flags state; // will only be one of cs_read_*
 	int dir_fd;
 	int index_fd;
@@ -31,6 +44,7 @@ struct chronos_handle {
 //	* 3 if the directory lookup failed, because of bad permissions, some part of the path wasn't a directory, etc.
 //	* 4 if attempting to create the directory failed
 //	* 5 if locking the event log failed
+//	* 6 if memory allocation for chronos structures failed
 int chronos_open( const char * dir, enum chronos_flags flags, struct chronos_handle * out_handle );
 
 // Closes a chronos event log.
@@ -66,9 +80,6 @@ struct index_entry {
 };
 
 // Outputs the given entry out to the specified file descriptor.
-//
-// Returns:
-//	* 0 on success
 int chronos_output( struct chronos_handle * handle, struct index_entry * entry, int fd_out );
 
 /*
@@ -79,6 +90,10 @@ int chronos_find( struct chronos_handle * handle, struct index_key * search_key,
 
 int chronos_list( struct chronos_handle * handle, ... );
 */
+
+// Returns:
+//	* 5 if there was an error upgrading the lock 
+int chronos_append( struct chronos_handle * handle, struct index_key * key_or_null, int fd_input );
 
 // Attempts to format the key in the buffer.
 //
@@ -93,5 +108,8 @@ int format_key( char * str, int max, struct index_key * key );
 //	* 1 if the date-time is invalid
 //	* 2 if the nanoseconds are invalid
 int parse_key( char * str, int length, struct index_key * out_key );
+
+// in theory this should be enough for any path string.
+#define PATH_BUFFER_SIZE 4096
 
 #endif /* __CHRONOS_H__ */
