@@ -141,7 +141,7 @@ int write_out( int fd_in, int fd_out, int count ){
 		int read_count = read( fd_in, buffer, size );
 
 		if( read_count == -1 ){
-			return C_READ_ERROR;
+			return C_IO_READ_ERROR;
 		}
 
 		int wrote = 0;
@@ -149,7 +149,7 @@ int write_out( int fd_in, int fd_out, int count ){
 		while( wrote < read_count ){
 			int rc = write( fd_out, buffer + wrote, read_count - wrote );
 			if( rc == -1 ){
-				return C_WRITE_ERROR;
+				return C_IO_WRITE_ERROR;
 			}
 			wrote += rc;
 		}
@@ -182,6 +182,7 @@ int require_open_file( struct chronos_handle * handle, enum chronos_file file, e
 		handle->state = cs_read_write;
 		rc = get_dir_lock( handle );
 		if( rc != 0 ){
+			handle->state = cs_read_only;
 			return rc;
 		}
 	}
@@ -317,7 +318,7 @@ int chronos_output( struct chronos_handle * handle, struct index_entry * entry, 
 	return write_out( handle->data_fd, fd_out, entry->length );
 }
 
-int chronos_stat( struct chronos_handle * handle, int * out_entry_count, int * out_data_size ){
+int chronos_stat( struct chronos_handle * handle, int * out_entry_count, uint32_t * out_data_size ){
 
 	// neither of these fstat commands should fail,
 	// not if the accompanying open worked. But we assume
@@ -333,7 +334,7 @@ int chronos_stat( struct chronos_handle * handle, int * out_entry_count, int * o
 
 		rc = fstat( handle->index_fd, & stat_buf );
 		if( rc != 0 ){
-			return C_READ_ERROR;
+			return C_STAT_ERROR;
 		}
 
 		*out_entry_count = stat_buf.st_size / sizeof(struct index_entry);
@@ -348,9 +349,9 @@ int chronos_stat( struct chronos_handle * handle, int * out_entry_count, int * o
 
 		struct stat stat_buf;
 
-		rc = fstat( handle->index_fd, & stat_buf );
+		rc = fstat( handle->data_fd, & stat_buf );
 		if( rc != 0 ){
-			return C_READ_ERROR;
+			return C_STAT_ERROR;
 		}
 
 		*out_data_size = stat_buf.st_size;
@@ -361,6 +362,20 @@ int chronos_stat( struct chronos_handle * handle, int * out_entry_count, int * o
 
 #include <time.h>
 
+int init_key( struct index_key * out_key ){
+	struct timespec time;
+
+	int rc = clock_gettime( CLOCK_REALTIME, &time );
+
+	if( rc == -1 ){
+		return C_KEY_INIT_FAILED;
+	}
+
+	out_key->seconds = time.tv_sec;
+	out_key->nanos = time.tv_nsec;
+
+	return 0;
+}
 #define KEY_FORMAT "%Y-%m-%d %H:%M:%S"
 
 int format_key( char * buf, int max, struct index_key * key ){
@@ -410,6 +425,22 @@ int parse_key( char * str, int length, struct index_key * out_key ){
 		return 2;
 	}
 
+	return 0;
+}
+
+int index_key_cmp( struct index_key * key1, struct index_key * key2 ){
+	if( key1->seconds < key2->seconds ){
+		return -1;
+	}
+	if( key1->seconds > key2->seconds ){
+		return 1;
+	}
+	if( key1->nanos < key2->nanos ){
+		return -1;
+	}
+	if( key1->nanos > key2->nanos ){
+		return 1;
+	}
 	return 0;
 }
 

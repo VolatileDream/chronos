@@ -5,28 +5,13 @@
 #include <sys/mman.h>
 
 // implementation of binary search.
-static int compare( struct index_key * key1, struct index_key * key2 ){
-	if( key1->seconds < key2->seconds ){
-		return -1;
-	}
-	if( key1->seconds > key2->seconds ){
-		return 1;
-	}
-	if( key1->nanos < key2->nanos ){
-		return -1;
-	}
-	if( key1->nanos > key2->nanos ){
-		return 1;
-	}
-	return 0;
-}
 
 static int find2( struct index_entry * entries, struct index_key * key, int start, int end, int count ){
 	int mid = (end - start) / 2 + start;
 
 	struct index_key * lookup = & entries[mid].key;
 
-	int cmp = compare( key, lookup );
+	int cmp = index_key_cmp( key, lookup );
 	if( cmp == 0 ){
 		return mid;
 	}
@@ -58,6 +43,14 @@ int chronos_find( struct chronos_handle * handle, struct index_key * key, struct
 
 	int entry_count;
 	rc = chronos_stat( handle, & entry_count, NULL );
+	if( rc != 0 ){
+		return rc;
+	}
+
+	// this case causes mmap to error
+	if( entry_count == 0 ){
+		return C_NOT_FOUND;
+	}
 
 	void* mem_ptr = mmap( NULL // suggested segment offset
 				, entry_count * sizeof(struct index_entry) // segment size
@@ -67,7 +60,7 @@ int chronos_find( struct chronos_handle * handle, struct index_key * key, struct
 				, 0 ); // file offset
 
 	if( mem_ptr == MAP_FAILED ){
-		return C_READ_ERROR;
+		return C_IO_READ_ERROR;
 	}
 
 	int index = find( (struct index_entry*)mem_ptr, key, entry_count );

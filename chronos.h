@@ -1,6 +1,8 @@
 #ifndef __CHRONOS_H__
 #define __CHRONOS_H__
 
+#include <stdint.h>
+
 // The Chronos return codes
 
 #define C_BAD_READ_WRITE_ARG 1
@@ -10,10 +12,13 @@
 #define C_LOCK_FAILED 5
 #define C_MEMORY_ALLOC_FAILED 6
 #define C_FILE_OPEN_FAILED 7
-#define C_READ_ERROR 8
-#define C_WRITE_ERROR 9
+#define C_IO_READ_ERROR 8
+#define C_IO_WRITE_ERROR 9
 
 #define C_NOT_FOUND 10
+#define C_KEY_INIT_FAILED 11
+
+#define C_STAT_ERROR 12
 
 enum chronos_flags {
 	cs_read_only	= 0x1,
@@ -63,9 +68,7 @@ int chronos_open( const char * dir, enum chronos_flags flags, struct chronos_han
 int chronos_close( struct chronos_handle * handle );
 
 // Get data about the chronos event log
-int chronos_stat( struct chronos_handle * handle, int * out_entry_count, int * out_data_size );
-
-#include <stdint.h>
+int chronos_stat( struct chronos_handle * handle, int * out_entry_count, uint32_t * out_data_size );
 
 // min macro from: https://stackoverflow.com/questions/3437404/min-and-max-in-c
 #define min(a,b) \
@@ -84,16 +87,17 @@ struct index_entry {
 	struct index_key key;
 };
 
+int index_key_cmp( struct index_key * key1, struct index_key * key2 );
+
+// Returns the last index entry
+int chronos_last( struct chronos_handle * handle, struct index_entry * out_entry );
+
 // Outputs the given entry out to the specified file descriptor.
 int chronos_output( struct chronos_handle * handle, struct index_entry * entry, int fd_out );
-
 
 // Searches the chronos event log for the specified key
 int chronos_find( struct chronos_handle * handle, struct index_key * search_key, struct index_entry * out_entry );
 
-/*
-int chronos_list( struct chronos_handle * handle, ... );
-*/
 
 // Returns:
 //	* 5 if there was an error upgrading the lock 

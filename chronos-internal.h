@@ -15,4 +15,7 @@ enum chronos_file {
 // if we are required to change from read to read-write then the file lock is updated.
 int require_open_file( struct chronos_handle * handle, enum chronos_file file, enum chronos_flags flag );
 
+// sets the time in the key
+int init_key( struct index_key * out_key );
+
 #endif /* __CHRONOS_INTERNAL_H__ */
