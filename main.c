@@ -50,7 +50,7 @@ static int count( int argc, char** argv ){
 
 	struct chronos_handle handle;
 
-	int rc = chronos_open( dir, cs_read_only | cs_create, & handle );
+	int rc = chronos_open( dir, cs_read_only, & handle );
 
 	if( rc != 0 ){
 		perror("chronos_open");
@@ -88,7 +88,7 @@ static int get( int argc, char** argv ){
 	}
 
 	struct chronos_handle handle;
-	rc = chronos_open( dir, cs_read_only | cs_create, & handle );
+	rc = chronos_open( dir, cs_read_only, & handle );
 	if( rc != 0 ){
 		perror("chronos_open");
 		return rc;
@@ -122,7 +122,7 @@ static int append( int argc, char** argv ){
 
 	struct chronos_handle handle;
 
-	int rc = chronos_open( dir, cs_read_only | cs_create, & handle );
+	int rc = chronos_open( dir, cs_read_only, & handle );
 
 	if( rc != 0 ){
 		perror("chronos_open");
@@ -146,7 +146,7 @@ static int list( int argc, char** argv ){
 
 	struct chronos_handle handle;
 
-	int rc = chronos_open( dir, cs_read_only | cs_create, & handle );
+	int rc = chronos_open( dir, cs_read_only, & handle );
 
 	if( rc != 0 ){
 		perror("chronos_open");
