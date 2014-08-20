@@ -102,8 +102,9 @@ static int require_directory( const char * dir, enum chronos_flags flags, int * 
 	}
 
 	// at this point the path exists.
+	dir_stat_rc = stat( dir, &stat_buffer );
 
-	if( ! S_ISDIR( stat_buffer.st_mode ) ){
+	if( dir_stat_rc == -1 || ! S_ISDIR( stat_buffer.st_mode ) ){
 		// event log directory itself wasn't a directory.
 		return C_LOOKUP_FAILED;
 	}
