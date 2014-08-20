@@ -390,7 +390,7 @@ int format_key( char * buf, int max, struct index_key * key ){
 	}
 
 	// append nanoseconds to it
-	int sn_count = snprintf( buf + strf_count, max - strf_count, ".%09d", key->nanos );
+	int sn_count = snprintf( buf + strf_count, max - strf_count, ".%09u", key->nanos );
 
 	if( sn_count == 0 ){
 		// couldn't add the micros to the string

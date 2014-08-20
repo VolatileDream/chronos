@@ -12,6 +12,7 @@
 #define C_LOCK_FAILED 5
 #define C_MEMORY_ALLOC_FAILED 6
 #define C_FILE_OPEN_FAILED 7
+
 #define C_IO_READ_ERROR 8
 #define C_IO_WRITE_ERROR 9
 
@@ -19,6 +20,7 @@
 #define C_KEY_INIT_FAILED 11
 
 #define C_STAT_ERROR 12
+#define C_NO_MORE_ELEMENTS 13
 
 enum chronos_flags {
 	cs_read_only	= 0x1,
@@ -98,6 +100,16 @@ int chronos_output( struct chronos_handle * handle, struct index_entry * entry, 
 // Searches the chronos event log for the specified key
 int chronos_find( struct chronos_handle * handle, struct index_key * search_key, struct index_entry * out_entry );
 
+// some stuff to do iteration over the log
+
+struct chronos_iterator {
+	int index_position;
+	int index_size;
+};
+
+int chronos_iterate( struct chronos_handle * handle, struct chronos_iterator * out_iter );
+
+int chronos_iterate_next( struct chronos_handle * handle, struct chronos_iterator * iter, struct index_entry * out_entry );
 
 // Returns:
 //	* 5 if there was an error upgrading the lock 

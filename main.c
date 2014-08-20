@@ -140,6 +140,47 @@ static int append( int argc, char** argv ){
 	return 0;
 }
 
+static int list( int argc, char** argv ){
+
+	char * dir = argv[2];
+
+	struct chronos_handle handle;
+
+	int rc = chronos_open( dir, cs_read_only | cs_create, & handle );
+
+	if( rc != 0 ){
+		perror("chronos_open");
+		return rc;
+	}
+
+	struct chronos_iterator iter;
+	rc = chronos_iterate( & handle, & iter );
+	if( rc != 0 ){
+		perror("chronos_iterate");
+		return rc;
+	}
+
+	struct index_entry entry;
+
+	for(;;){
+		rc = chronos_iterate_next( & handle, & iter, & entry );
+		if( rc != 0 ){
+			break;
+		}
+		char buffer[1024];
+		format_key( buffer, sizeof(buffer), & entry.key );
+		printf("%s\n", buffer);
+	}
+
+	if( rc == C_NO_MORE_ELEMENTS ){
+		rc = 0;
+	}
+
+	chronos_close( & handle );
+
+	return rc;
+}
+
 // commands for the cli interface
 typedef int (*command_func)( int argc, char** argv );
 
@@ -156,8 +197,8 @@ static command_t commands[] = {
 	{ .name = "count", .func = &count },
 	{ .name = "get", .func = &get },
 	{ .name = "append", .func = &append },
-/*
 	{ .name = "list", .func = &list },
+/*
 	{ .name = "iterate", .func = &iterate },
 */
 };
