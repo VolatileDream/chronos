@@ -91,9 +91,6 @@ struct index_entry {
 
 int index_key_cmp( struct index_key * key1, struct index_key * key2 );
 
-// Returns the last index entry
-int chronos_last( struct chronos_handle * handle, struct index_entry * out_entry );
-
 // Outputs the given entry out to the specified file descriptor.
 int chronos_output( struct chronos_handle * handle, struct index_entry * entry, int fd_out );
 
