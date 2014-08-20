@@ -7,6 +7,9 @@
 // strncmp
 #include <string.h>
 
+// write
+#include <unistd.h>
+
 static int usage( int argc, char** argv ){
 	printf("usage: %s [init|count|list|get|append|iterate] \n\n", argv[0] );
 	
@@ -140,7 +143,9 @@ static int append( int argc, char** argv ){
 	return 0;
 }
 
-static int list( int argc, char** argv ){
+typedef void (*ui_iterator)( int argc, char** argv, struct chronos_handle * handle, struct index_entry * entry );
+
+static int do_iterate( int argc, char** argv, ui_iterator ui_iter ){
 
 	char * dir = argv[2];
 
@@ -167,9 +172,7 @@ static int list( int argc, char** argv ){
 		if( rc != 0 ){
 			break;
 		}
-		char buffer[1024];
-		format_key( buffer, sizeof(buffer), & entry.key );
-		printf("%s\n", buffer);
+		ui_iter( argc, argv, & handle, & entry );
 	}
 
 	if( rc == C_NO_MORE_ELEMENTS ){
@@ -179,6 +182,40 @@ static int list( int argc, char** argv ){
 	chronos_close( & handle );
 
 	return rc;
+}
+
+void list_iter( int argc, char** argv, struct chronos_handle * handle, struct index_entry * entry ){
+	char buffer[1024];
+	format_key( buffer, sizeof(buffer), & entry->key );
+	printf("%s\n", buffer);
+}
+int list( int argc, char** argv ){
+	return do_iterate( argc, argv, & list_iter );
+}
+
+void full_iter( int argc, char** argv, struct chronos_handle * handle, struct index_entry * entry ){
+	char buffer[1024];
+	int length = format_key( buffer, sizeof(buffer), & entry->key );
+
+	if( argc > 3 ){
+		write( 1, argv[3], strlen( argv[3] ) );
+	}
+
+	write( 1, buffer, length );
+
+	if( argc > 4 ){
+		write( 1, argv[4], strlen( argv[4] ) );
+	}
+
+	chronos_output( handle, entry, 1 );
+
+	if( argc > 5 ){
+		write( 1, argv[5], strlen( argv[5] ) );
+	}
+}
+int iterate( int argc, char** argv ){
+	printf("%d\n", argc);
+	return do_iterate( argc, argv, & full_iter );
 }
 
 // commands for the cli interface
@@ -198,9 +235,7 @@ static command_t commands[] = {
 	{ .name = "get", .func = &get },
 	{ .name = "append", .func = &append },
 	{ .name = "list", .func = &list },
-/*
 	{ .name = "iterate", .func = &iterate },
-*/
 };
 
 int main(int argc, char** argv){
