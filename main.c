@@ -1,12 +1,20 @@
 
 #include "chronos.h"
 
-#include "headers.h"
+// printf
+#include <stdio.h>
 
-int usage( int argc, char** argv ){
-	printf("usage: %s [init|list|get|append|iterate] \n\n", argv[0] );
+// strncmp
+#include <string.h>
+
+// write
+#include <unistd.h>
+
+static int usage( int argc, char** argv ){
+	printf("usage: %s [init|count|list|get|append|iterate] \n\n", argv[0] );
 	
 	printf(" init <directory>                   - initialize a log in the directory\n" );
+	printf(" count <directory>                  - prints the number of entries in the log\n");
 	printf(" list <directory>                   - list all the keys in the log\n");
 	printf(" get <directory> key                - get the specified key in the log\n");
 	printf(" append <directory>                 - append a value to the log\n");
@@ -21,16 +29,212 @@ int usage( int argc, char** argv ){
 	return 0;
 }
 
+static int init( int argc, char** argv ){
+
+	char * dir = argv[2];
+
+	struct chronos_handle handle;
+
+	int rc = chronos_open( dir, cs_read_only | cs_create, & handle );
+
+	if( rc != 0 ){
+		perror("chronos_open");
+		return rc;
+	}
+
+	chronos_close( & handle );
+
+	return 0;
+}
+
+static int count( int argc, char** argv ){
+
+	char * dir = argv[2];
+
+	struct chronos_handle handle;
+
+	int rc = chronos_open( dir, cs_read_only, & handle );
+
+	if( rc != 0 ){
+		perror("chronos_open");
+		return rc;
+	}
+
+	int count;
+	rc = chronos_stat( & handle, & count, NULL );
+	if( rc != 0 ){
+		perror("chronos_stat");
+		return rc;
+	}
+
+	chronos_close( & handle );
+
+	printf("%d\n", count );
+
+	return 0;
+}
+
+static int get( int argc, char** argv ){
+
+	char * dir = argv[2];
+
+	if( argc != 4 ){
+		printf("bad number of arguments to get\n");
+		return -1;
+	}
+
+	struct index_key key;
+	int rc = parse_key( argv[3], strlen( argv[3] ), & key );
+	if( rc != 0 ){
+		printf("couldn't parse the key\n");
+		return rc;
+	}
+
+	struct chronos_handle handle;
+	rc = chronos_open( dir, cs_read_only, & handle );
+	if( rc != 0 ){
+		perror("chronos_open");
+		return rc;
+	}
+
+	struct index_entry entry;
+
+	rc = chronos_find( & handle, & key, & entry );
+	if( rc != 0 ){
+		if( rc != C_NOT_FOUND ){
+			perror("chronos_find");
+		}
+		return rc;
+	}
+
+	// output to stdout
+	chronos_output( & handle, & entry, 1 );
+	if( rc != 0 ){
+		perror("chronos_output");
+		return rc;
+	}
+
+	chronos_close( & handle );
+
+	return 0;
+}
+
+static int append( int argc, char** argv ){
+
+	char * dir = argv[2];
+
+	struct chronos_handle handle;
+
+	int rc = chronos_open( dir, cs_read_only, & handle );
+
+	if( rc != 0 ){
+		perror("chronos_open");
+		return rc;
+	}
+
+	rc = chronos_append( & handle, NULL, 0 );
+	if( rc != 0 ){
+		perror("chronos_append");
+		return rc;
+	}
+
+	chronos_close( & handle );
+
+	return 0;
+}
+
+typedef void (*ui_iterator)( int argc, char** argv, struct chronos_handle * handle, struct index_entry * entry );
+
+static int do_iterate( int argc, char** argv, ui_iterator ui_iter ){
+
+	char * dir = argv[2];
+
+	struct chronos_handle handle;
+
+	int rc = chronos_open( dir, cs_read_only, & handle );
+
+	if( rc != 0 ){
+		perror("chronos_open");
+		return rc;
+	}
+
+	struct chronos_iterator iter;
+	rc = chronos_iterate( & handle, & iter );
+	if( rc != 0 ){
+		perror("chronos_iterate");
+		return rc;
+	}
+
+	struct index_entry entry;
+
+	for(;;){
+		rc = chronos_iterate_next( & handle, & iter, & entry );
+		if( rc != 0 ){
+			break;
+		}
+		ui_iter( argc, argv, & handle, & entry );
+	}
+
+	if( rc == C_NO_MORE_ELEMENTS ){
+		rc = 0;
+	}
+
+	chronos_close( & handle );
+
+	return rc;
+}
+
+void list_iter( int argc, char** argv, struct chronos_handle * handle, struct index_entry * entry ){
+	char buffer[1024];
+	format_key( buffer, sizeof(buffer), & entry->key );
+	printf("%s\n", buffer);
+}
+int list( int argc, char** argv ){
+	return do_iterate( argc, argv, & list_iter );
+}
+
+void full_iter( int argc, char** argv, struct chronos_handle * handle, struct index_entry * entry ){
+	char buffer[1024];
+	int length = format_key( buffer, sizeof(buffer), & entry->key );
+
+	if( argc > 3 ){
+		write( 1, argv[3], strlen( argv[3] ) );
+	}
+
+	write( 1, buffer, length );
+
+	if( argc > 4 ){
+		write( 1, argv[4], strlen( argv[4] ) );
+	}
+
+	chronos_output( handle, entry, 1 );
+
+	if( argc > 5 ){
+		write( 1, argv[5], strlen( argv[5] ) );
+	}
+}
+int iterate( int argc, char** argv ){
+	printf("%d\n", argc);
+	return do_iterate( argc, argv, & full_iter );
+}
+
 // commands for the cli interface
+typedef int (*command_func)( int argc, char** argv );
+
+typedef struct command_t {
+       const char* name;
+       const command_func func;
+} command_t;
 
 static command_t commands[] = {
 	{ .name = "--help", .func = &usage },
 	{ .name = "-h", .func = &usage },
 	{ .name = "?", .func = &usage },
 	{ .name = "init", .func = &init },
-	{ .name = "list", .func = &list },
+	{ .name = "count", .func = &count },
 	{ .name = "get", .func = &get },
 	{ .name = "append", .func = &append },
+	{ .name = "list", .func = &list },
 	{ .name = "iterate", .func = &iterate },
 };
 
