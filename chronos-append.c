@@ -35,6 +35,28 @@ static int copy_fd( int fd_from, int fd_to, uint32_t *out_size ){
 	return 0;
 }
 
+static int key_is_later( struct chronos_handle * handle, struct index_key * provided ){
+
+	// bounds check on key date-time
+	struct index_entry last_entry;
+
+	int rc = chronos_entry( handle, -1, & last_entry );
+
+	if( rc == C_NO_MORE_ELEMENTS ){
+		// empty index means the key is always later
+		return 0;
+
+	} else if( rc != 0 ){
+		return rc;
+	}
+
+	if( index_key_cmp( & last_entry.key, provided ) >= 0 ){
+		return C_PROVIDED_KEY_NOT_LATEST;
+	}
+
+	return 0;
+}
+
 int chronos_append( struct chronos_handle * handle, struct index_key * maybe_key, int fd_in ){
 
 	int rc;
@@ -58,6 +80,11 @@ int chronos_append( struct chronos_handle * handle, struct index_key * maybe_key
 		if( rc ){
 			return rc;
 		}
+	}
+
+	rc = key_is_later( handle, & entry.key );
+	if( rc != 0 ){
+		return rc;
 	}
 
 	rc = require_open_file( handle, cf_data_store, cs_read_write );

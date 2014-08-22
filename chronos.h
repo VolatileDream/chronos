@@ -20,7 +20,8 @@
 #define C_KEY_INIT_FAILED 11
 
 #define C_STAT_ERROR 12
-#define C_NO_MORE_ELEMENTS 13
+#define C_NO_MORE_ELEMENTS 13 // if the requested entry doesn't exist
+#define C_PROVIDED_KEY_NOT_LATEST 14 // if the key provided isn't later than the last key
 
 enum chronos_flags {
 	cs_read_only	= 0x1,
