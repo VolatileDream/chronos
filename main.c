@@ -11,21 +11,37 @@
 #include <unistd.h>
 
 static int usage( int argc, char** argv ){
-	printf("usage: %s [init|count|list|get|append|iterate] \n\n", argv[0] );
+	printf("usage: %s <command> [args ...] \n\n", argv[0] );
+
+	printf("Commands:\n");
 	
-	printf(" init <directory>                   - initialize a log in the directory\n" );
-	printf(" count <directory>                  - prints the number of entries in the log\n");
-	printf(" list <directory>                   - list all the keys in the log\n");
-	printf(" get <directory> key                - get the specified key in the log\n");
-	printf(" append <directory>                 - append a value to the log\n");
-	printf(" iterate <directory> <s1> <s2> <s3> - prints out all the entries\n");
+	printf(" init <directory>\n");
+	printf("   initialize a log in the directory\n\n");
+
+	printf(" count <directory>\n");
+	printf("   prints the number of entries in the log\n\n");
+
+	printf(" last <directory>\n");
+	printf("   prints out the last key in the log\n\n");
+
+	printf(" list <directory>\n");
+	printf("   list all the keys in the log\n\n");
+
+	printf(" get <directory> <key>\n");
+	printf("   get the specified key in the log\n\n");
+
+	printf(" append <directory> [-t time]\n");
+	printf("   append a value to the log\n");
+	printf("   -t allows the user to change the time that the entry reports being inserted.\n\n");
+
+	printf(" iterate <directory> <s1> <s2> <s3>\n");
+	printf("   prints out keys and entries as follows:\n");
+	printf("     <s1>key<s2>entry<s3>\n");
+	printf("   if any/all of s1, s2, or s3 are omitted, the empty string is printed instead\n");
 	
 	printf("\n");
 
 	printf("%s expects keys to parse to a date\n", argv[0]);
-	printf("iterate prints out keys and entries as follows:\n");
-	printf("    <s1>key<s2>entry<s3>\n");
-	printf(" if any/all of s1, s2, or s3 are omitted, the empty string is printed instead\n");
 	return 0;
 }
 
@@ -123,6 +139,50 @@ static int append( int argc, char** argv ){
 
 	char * dir = argv[2];
 
+	int key_parsed = 0;
+	struct index_key key;
+
+	if( argc > 4 && strncmp("-t", argv[3], 2) == 0 ){
+		int rc = parse_key( argv[4], strlen( argv[4] ), & key );
+		if( rc == 0 ){
+			key_parsed = 1;
+		} else {
+			printf("bad key value: %s\n", argv[4]);
+			return rc;
+		}
+	}
+
+	struct chronos_handle handle;
+
+	int rc = chronos_open( dir, cs_read_only, & handle );
+
+	if( rc != 0 ){
+		perror("chronos_open");
+		return rc;
+	}
+	if( key_parsed ){
+		rc = chronos_append( & handle, & key, 0 );
+	} else {
+		rc = chronos_append( & handle, NULL, 0 );
+	}
+	if( rc != 0 ){
+		if( rc == C_PROVIDED_KEY_NOT_LATEST ){
+			printf("can't insert keys before the last entry.\n");
+		} else {
+			perror("chronos_append");
+		}
+		return rc;
+	}
+
+	chronos_close( & handle );
+
+	return 0;
+}
+
+static int last( int argc, char** argv ){
+
+	char * dir = argv[2];
+
 	struct chronos_handle handle;
 
 	int rc = chronos_open( dir, cs_read_only, & handle );
@@ -132,17 +192,24 @@ static int append( int argc, char** argv ){
 		return rc;
 	}
 
-	rc = chronos_append( & handle, NULL, 0 );
+	struct index_entry entry;
+
+	rc = chronos_entry( & handle, -1, & entry );
 	if( rc != 0 ){
-		perror("chronos_append");
+		if( rc != C_NO_MORE_ELEMENTS ){
+			perror("chronos_append");
+		}
 		return rc;
 	}
+
+	char buffer[1024];
+	format_key( buffer, sizeof(buffer), & entry.key );
+	printf( "%s\n", buffer );
 
 	chronos_close( & handle );
 
 	return 0;
 }
-
 typedef void (*ui_iterator)( int argc, char** argv, struct chronos_handle * handle, struct index_entry * entry );
 
 static int do_iterate( int argc, char** argv, ui_iterator ui_iter ){
@@ -234,6 +301,7 @@ static command_t commands[] = {
 	{ .name = "count", .func = &count },
 	{ .name = "get", .func = &get },
 	{ .name = "append", .func = &append },
+	{ .name = "last", .func = &last },
 	{ .name = "list", .func = &list },
 	{ .name = "iterate", .func = &iterate },
 };
