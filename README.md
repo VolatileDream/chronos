@@ -33,8 +33,11 @@ Since one of the goals of Chronos is efficiency, here are the running times for 
 
 Command | Running Time | Comments
 :-------|:-------------|:--------
-init    | O( 1 )       |
-list    | O( n )       |
-get     | O( log(n) + m ) | m = time to write the data to stdout
 append  | O( 1 + m )   | m = time to read the data in and write it to file
+count   | O( 1 )       |
+get     | O( log(n) + m ) | m = time to write the data to stdout
+init    | O( 1 )       |
+iterate | O( n )       |
+last    | O( 1 )       |
+list    | O( n )       |
 
