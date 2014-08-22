@@ -97,7 +97,16 @@ int chronos_output( struct chronos_handle * handle, struct index_entry * entry, 
 // Searches the chronos event log for the specified key
 int chronos_find( struct chronos_handle * handle, struct index_key * search_key, struct index_entry * out_entry );
 
-// some stuff to do iteration over the log
+// inserts a new entry into the log
+// if key_or_null must be null (current time), or a time that is passed the last key inserted.
+int chronos_append( struct chronos_handle * handle, struct index_key * key_or_null, int fd_input );
+
+// retreives the entry_number-th entry in the log, or returns C_NO_MORE_ELEMENTS if no such element exists
+// accepts negative values for entry_number, such values are indexed from the BACK of the log.
+//  that is entry -1 is the last entry in the log, -2 is the second last, etc.
+int chronos_entry( struct chronos_handle * handle, int entry_number, struct index_entry * out_key );
+
+// some stuff to do iteration over the log, convenience wrappers around chronos_stat and chronos_entry
 
 struct chronos_iterator {
 	int index_position;
@@ -107,10 +116,6 @@ struct chronos_iterator {
 int chronos_iterate( struct chronos_handle * handle, struct chronos_iterator * out_iter );
 
 int chronos_iterate_next( struct chronos_handle * handle, struct chronos_iterator * iter, struct index_entry * out_entry );
-
-// Returns:
-//	* 5 if there was an error upgrading the lock 
-int chronos_append( struct chronos_handle * handle, struct index_key * key_or_null, int fd_input );
 
 // Attempts to format the key in the buffer.
 //
