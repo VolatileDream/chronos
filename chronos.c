@@ -436,6 +436,7 @@ int index_key_cmp( struct index_key * key1, struct index_key * key2 ){
 	if( key1->seconds > key2->seconds ){
 		return 1;
 	}
+	// seconds are equal, compare nanos
 	if( key1->nanos < key2->nanos ){
 		return -1;
 	}

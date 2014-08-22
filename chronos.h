@@ -89,6 +89,10 @@ struct index_entry {
 	struct index_key key;
 };
 
+// returns:
+//	-1; key1 < key2
+//	0 ; key1 == key2
+//	1 ; key1 > key2
 int index_key_cmp( struct index_key * key1, struct index_key * key2 );
 
 // Outputs the given entry out to the specified file descriptor.
