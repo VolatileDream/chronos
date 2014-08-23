@@ -30,7 +30,7 @@ static int usage( int argc, char** argv ){
 	printf(" get <directory> <key>\n");
 	printf("   get the specified key in the log\n\n");
 
-	printf(" append <directory> [-t time]\n");
+	printf(" append <directory> [-t <key>]\n");
 	printf("   append a value to the log\n");
 	printf("   -t allows the user to change the time that the entry reports being inserted.\n\n");
 
