@@ -63,10 +63,11 @@ static int init( int argc, char** argv ){
 	return 0;
 }
 
-static int count( int argc, char** argv ){
+typedef int (*open_func)( struct chronos_handle * handle, int argc, char** argv );
+
+static int do_open_func( int argc, char** argv, open_func func ){
 
 	char * dir = argv[2];
-
 	struct chronos_handle handle;
 
 	int rc = chronos_open( dir, cs_read_only, & handle );
@@ -76,46 +77,42 @@ static int count( int argc, char** argv ){
 		return rc;
 	}
 
+	rc = (*func)( & handle, argc, argv );
+
+	chronos_close( & handle );
+
+	return rc;
+
+}
+
+static int do_count( struct chronos_handle * handle, int argc, char** argv ){
 	int count;
-	rc = chronos_stat( & handle, & count, NULL );
+	int rc = chronos_stat( handle, & count, NULL );
 	if( rc != 0 ){
 		perror("chronos_stat");
 		return rc;
 	}
-
-	chronos_close( & handle );
 
 	printf("%d\n", count );
 
 	return 0;
 }
 
-static int get( int argc, char** argv ){
+static int count( int argc, char** argv ){
+	return do_open_func( argc, argv, & do_count );
+}
 
-	char * dir = argv[2];
-
-	if( argc != 4 ){
-		printf("bad number of arguments to get\n");
-		return -1;
-	}
-
+static int do_get( struct chronos_handle * handle, int argc, char** argv ){
 	struct index_key key;
 	int rc = parse_key( argv[3], strlen( argv[3] ), & key );
 	if( rc != 0 ){
-		printf("couldn't parse the key\n");
-		return rc;
-	}
-
-	struct chronos_handle handle;
-	rc = chronos_open( dir, cs_read_only, & handle );
-	if( rc != 0 ){
-		perror("chronos_open");
+		fprintf( stderr, "couldn't parse the key\n" );
 		return rc;
 	}
 
 	struct index_entry entry;
 
-	rc = chronos_find( & handle, & key, & entry );
+	rc = chronos_find( handle, & key, & entry );
 	if( rc != 0 ){
 		if( rc != C_NOT_FOUND ){
 			perror("chronos_find");
@@ -124,21 +121,28 @@ static int get( int argc, char** argv ){
 	}
 
 	// output to stdout
-	chronos_output( & handle, & entry, 1 );
+	chronos_output( handle, & entry, 1 );
 	if( rc != 0 ){
 		perror("chronos_output");
 		return rc;
 	}
 
-	chronos_close( & handle );
-
 	return 0;
 }
 
-static int append( int argc, char** argv ){
+static int get( int argc, char** argv ){
 
-	char * dir = argv[2];
+	if( argc != 4 ){
+		fprintf(stderr, "bad number of arguments to get\n" );
+		return -1;
+	}
 
+	int rc = do_open_func( argc, argv, & do_get );
+
+	return rc;
+}
+
+static int do_append( struct chronos_handle * handle, int argc, char** argv ){
 	int key_parsed = 0;
 	struct index_key key;
 
@@ -147,54 +151,37 @@ static int append( int argc, char** argv ){
 		if( rc == 0 ){
 			key_parsed = 1;
 		} else {
-			printf("bad key value: %s\n", argv[4]);
+			fprintf( stderr, "bad key value: %s\n", argv[4]);
 			return rc;
 		}
 	}
 
-	struct chronos_handle handle;
-
-	int rc = chronos_open( dir, cs_read_only, & handle );
-
-	if( rc != 0 ){
-		perror("chronos_open");
-		return rc;
-	}
+	int rc = 0;
 	if( key_parsed ){
-		rc = chronos_append( & handle, & key, 0 );
+		rc = chronos_append( handle, & key, 0 );
 	} else {
-		rc = chronos_append( & handle, NULL, 0 );
+		rc = chronos_append( handle, NULL, 0 );
 	}
 	if( rc != 0 ){
 		if( rc == C_PROVIDED_KEY_NOT_LATEST ){
-			printf("can't insert keys before the last entry.\n");
+			fprintf( stderr, "can't insert keys before the last entry.\n");
 		} else {
 			perror("chronos_append");
 		}
 		return rc;
 	}
 
-	chronos_close( & handle );
-
 	return 0;
 }
 
-static int last( int argc, char** argv ){
+static int append( int argc, char** argv ){
+	return do_open_func( argc, argv, & do_append );
+}
 
-	char * dir = argv[2];
-
-	struct chronos_handle handle;
-
-	int rc = chronos_open( dir, cs_read_only, & handle );
-
-	if( rc != 0 ){
-		perror("chronos_open");
-		return rc;
-	}
-
+static int do_last( struct chronos_handle * handle, int argc, char** argv ){
 	struct index_entry entry;
 
-	rc = chronos_entry( & handle, -1, & entry );
+	int rc = chronos_entry( handle, -1, & entry );
 	if( rc != 0 ){
 		if( rc != C_NO_MORE_ELEMENTS ){
 			perror("chronos_append");
@@ -206,10 +193,13 @@ static int last( int argc, char** argv ){
 	format_key( buffer, sizeof(buffer), & entry.key );
 	printf( "%s\n", buffer );
 
-	chronos_close( & handle );
-
 	return 0;
 }
+
+static int last( int argc, char** argv ){
+	return do_open_func( argc, argv, & do_last );
+}
+
 typedef void (*ui_iterator)( int argc, char** argv, struct chronos_handle * handle, struct index_entry * entry );
 
 static int do_iterate( int argc, char** argv, ui_iterator ui_iter ){
@@ -281,7 +271,6 @@ void full_iter( int argc, char** argv, struct chronos_handle * handle, struct in
 	}
 }
 int iterate( int argc, char** argv ){
-	printf("%d\n", argc);
 	return do_iterate( argc, argv, & full_iter );
 }
 
@@ -309,6 +298,7 @@ static command_t commands[] = {
 int main(int argc, char** argv){
 
 	if( argc < 3 ){
+		fprintf( stderr, "insufficient arguments supplied, require at least command and directory.\n" );
 		usage( argc, argv );
 		return 2;
 	}
@@ -322,7 +312,7 @@ int main(int argc, char** argv){
 		}
 	}
 
-	printf("error: unknown command '%s'\n", command );
+	fprintf( stderr, "error: unknown command '%s'\n", command );
 	usage( argc, argv );
 	return 2;
 }
