@@ -13,9 +13,12 @@ Run: `tup init ; tup` to build Chronos.
 Chronos is intended to be used in a scripted environment, and supports a few commands.
 
 * `chronos init <directory>` creates a new chronos log in the specified directory.
+* `chronos count <directory>` counts the number of entries in the log.
+* `chronos last <directory>` lists the last key inserted into Chronos.
 * `chronos list <directory>` lists all of the times at which data was inserted into Chronos.
 * `chronos get <directory> <key>` retrieves a single key and writes it to stdout.
-* `chronos append <directory>` inserts new data into the Chronos log, reading the data from stdin.
+* `chronos append <directory> [-t key]` inserts new data into the Chronos log, reading the data from stdin.
+* `chronos iterate <directory> [d1 [, d2 [, d3]]]` prints all the entries in the log to standard output, using specified delimiters.
 
 Chronos is multi-process safe, and accomplishes this by using file locks on the directory that houses it's index and data store.
 

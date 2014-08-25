@@ -34,10 +34,10 @@ static int usage( int argc, char** argv ){
 	printf("   append a value to the log\n");
 	printf("   -t allows the user to change the time that the entry reports being inserted.\n\n");
 
-	printf(" iterate <directory> <s1> <s2> <s3>\n");
+	printf(" iterate <directory> [ d1 [, d2 [, d3 ]]]\n");
 	printf("   prints out keys and entries as follows:\n");
-	printf("     <s1>key<s2>entry<s3>\n");
-	printf("   if any/all of s1, s2, or s3 are omitted, the empty string is printed instead\n");
+	printf("     <d1>key<d2>entry<d3>\n");
+	printf("   if any/all of d1, d2, or d3 are omitted, the empty string is printed instead\n");
 	
 	printf("\n");
 
