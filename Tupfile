@@ -1,3 +1,4 @@
+.gitignore
 
 CFLAGS += -g
 CFLAGS += -Wall
