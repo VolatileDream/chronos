@@ -133,4 +133,12 @@ int parse_key( char * str, int length, struct index_key * out_key );
 // in theory this should be enough for any path string.
 #define PATH_BUFFER_SIZE 4096
 
+// things needed...
+
+// min macro from: https://stackoverflow.com/questions/3437404/min-and-max-in-c
+#define min(a,b) \
+   ({ __typeof__ (a) _a = (a); \
+       __typeof__ (b) _b = (b); \
+     _a < _b ? _a : _b; })
+
 #endif /* __CHRONOS_H__ */
