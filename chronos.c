@@ -398,7 +398,9 @@ int init_key( struct index_key * out_key ){
 
 int format_key( char * buf, int max, struct index_key * key ){
 
-	struct tm * time = gmtime( (time_t*) &key->seconds );
+	time_t seconds = key->seconds;
+
+	struct tm * time = gmtime( & seconds );
 
 	int strf_count = strftime( buf, max, KEY_FORMAT, time );
 
