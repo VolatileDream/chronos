@@ -107,7 +107,11 @@ int chronos_append( struct chronos_handle * handle, struct index_key * maybe_key
 		return rc;
 	}
 
-	rc = write( handle->index_fd, & entry, sizeof( entry ) );
+	struct index_entry platform_agnostic;
+
+	make_platform_agnostic( & entry, & platform_agnostic );
+
+	rc = write( handle->index_fd, & platform_agnostic, sizeof( platform_agnostic ) );
 	if( rc == -1 ){
 		return C_IO_WRITE_ERROR;
 	}

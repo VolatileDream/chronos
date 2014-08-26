@@ -1,6 +1,9 @@
 #ifndef __CHRONOS_INTERNAL_H__
 #define __CHRONOS_INTERNAL_H__
 
+void make_platform_agnostic( struct index_entry * entry, struct index_entry * out_platform_agnostic );
+void make_platform_specific( struct index_entry * out_entry, struct index_entry * platform_agnostic );
+
 // get a lock on the directory
 int get_dir_lock( struct chronos_handle * handle );
 

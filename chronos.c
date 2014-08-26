@@ -361,6 +361,23 @@ int chronos_stat( struct chronos_handle * handle, int * out_entry_count, uint32_
 	return 0;
 }
 
+#include <arpa/inet.h>
+
+// basic serialization protocol to be platform agnostic
+void make_platform_agnostic( struct index_entry * entry, struct index_entry * out_platform_agnostic ){
+	out_platform_agnostic->position    = htonl( entry->position );
+	out_platform_agnostic->length      = htonl( entry->length );
+	out_platform_agnostic->key.seconds = htonl( entry->key.seconds );
+	out_platform_agnostic->key.nanos   = htonl( entry->key.nanos );
+}
+
+void make_platform_specific( struct index_entry * out_entry, struct index_entry * platform_agnostic ){
+	out_entry->position    = ntohl( platform_agnostic->position );
+	out_entry->length      = ntohl( platform_agnostic->length );
+	out_entry->key.seconds = ntohl( platform_agnostic->key.seconds );
+	out_entry->key.nanos   = ntohl( platform_agnostic->key.nanos );
+}
+
 #include <time.h>
 
 int init_key( struct index_key * out_key ){

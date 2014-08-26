@@ -38,10 +38,14 @@ int chronos_entry( struct chronos_handle * handle, int entry_number, struct inde
 		return C_IO_READ_ERROR;
 	}
 
-	int read_data = read( handle->index_fd, out, sizeof(*out) );
-	if( read_data == -1 || read_data < sizeof(*out) ){
+	struct index_entry platform_agnostic;
+
+	int read_data = read( handle->index_fd, & platform_agnostic, sizeof(platform_agnostic) );
+	if( read_data == -1 || read_data < sizeof(platform_agnostic) ){
 		return C_IO_READ_ERROR;
 	}
+
+	make_platform_specific( out, & platform_agnostic );
 
 	return 0;
 }
