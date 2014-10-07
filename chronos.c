@@ -21,6 +21,12 @@
 // free
 #include <stdlib.h>
 
+// min macro from: https://stackoverflow.com/questions/3437404/min-and-max-in-c
+#define min(a,b) \
+   ({ __typeof__ (a) _a = (a); \
+       __typeof__ (b) _b = (b); \
+     _a < _b ? _a : _b; })
+
 #define INVALID_FD (-1)
 
 #define FILE_MODE (S_IRUSR | S_IWUSR)
@@ -34,6 +40,12 @@ static int mkdir_r( const char * dir ){
 
 	// use the returned size
 	int size = snprintf( buffer, sizeof(buffer), "%s", dir );
+
+	if( size > PATH_BUFFER_SIZE ){
+		// problem.
+		errno = ENAMETOOLONG;
+		return C_CREATE_FAILED;
+	}
 
 	// we should be able to handle a string like "/abc/def//"
 	for( int i=1; i < size; i++){
@@ -121,7 +133,7 @@ static int require_directory( const char * dir, enum chronos_flags flags, int * 
 	return 0;
 }
 
-int get_dir_lock( struct chronos_handle * handle ){
+static int get_dir_lock( struct chronos_handle * handle ){
 	int lock_flags = LOCK_SH;
 	if( handle->state & cs_read_write ){
 		lock_flags = LOCK_EX;
@@ -133,7 +145,7 @@ int get_dir_lock( struct chronos_handle * handle ){
 	return 0;
 }
 
-int write_out( int fd_in, int fd_out, int count ){
+static int write_out( int fd_in, int fd_out, int count ){
 	char buffer[1024];
 
 	while( count > 0 ){
@@ -183,6 +195,8 @@ int require_open_file( struct chronos_handle * handle, enum chronos_file file, e
 		handle->state = cs_read_write;
 		rc = get_dir_lock( handle );
 		if( rc != 0 ){
+			// we didn't get the write lock,
+			// so switch the lock type back.
 			handle->state = cs_read_only;
 			return rc;
 		}
@@ -195,7 +209,12 @@ int require_open_file( struct chronos_handle * handle, enum chronos_file file, e
 		
 		// open it!
 		char buffer[ PATH_BUFFER_SIZE ];
-		snprintf(buffer, sizeof(buffer), "%s/%s", handle->directory, file_name );
+		int size = snprintf(buffer, sizeof(buffer), "%s/%s", handle->directory, file_name );
+
+		if( size > PATH_BUFFER_SIZE ){
+			errno = ENAMETOOLONG;
+			return C_FILE_OPEN_FAILED;
+		}
 
 		// always open files for writing, because we might change our mind about only wanting
 		// to read from them later. This won't cause problems with writing to the file, because
@@ -361,23 +380,6 @@ int chronos_stat( struct chronos_handle * handle, int * out_entry_count, uint32_
 	return 0;
 }
 
-#include <arpa/inet.h>
-
-// basic serialization protocol to be platform agnostic
-void make_platform_agnostic( struct index_entry * entry, struct index_entry * out_platform_agnostic ){
-	out_platform_agnostic->position    = htonl( entry->position );
-	out_platform_agnostic->length      = htonl( entry->length );
-	out_platform_agnostic->key.seconds = htonl( entry->key.seconds );
-	out_platform_agnostic->key.nanos   = htonl( entry->key.nanos );
-}
-
-void make_platform_specific( struct index_entry * out_entry, struct index_entry * platform_agnostic ){
-	out_entry->position    = ntohl( platform_agnostic->position );
-	out_entry->length      = ntohl( platform_agnostic->length );
-	out_entry->key.seconds = ntohl( platform_agnostic->key.seconds );
-	out_entry->key.nanos   = ntohl( platform_agnostic->key.nanos );
-}
-
 #include <time.h>
 
 int init_key( struct index_key * out_key ){
@@ -394,6 +396,8 @@ int init_key( struct index_key * out_key ){
 
 	return 0;
 }
+
+// technically the FORMAT bit for STRFTIME, we also add nanos on the end of it.
 #define KEY_FORMAT "%Y-%m-%d %H:%M:%S"
 
 int format_key( char * buf, int max, struct index_key * key ){

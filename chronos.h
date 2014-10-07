@@ -84,12 +84,6 @@ struct index_entry {
 	struct index_key key;
 };
 
-// returns:
-//	-1; key1 < key2
-//	0 ; key1 == key2
-//	1 ; key1 > key2
-int index_key_cmp( struct index_key * key1, struct index_key * key2 );
-
 // Outputs the given entry out to the specified file descriptor.
 int chronos_output( struct chronos_handle * handle, struct index_entry * entry, int fd_out );
 
@@ -130,15 +124,13 @@ int format_key( char * str, int max, struct index_key * key );
 //	* 2 if the nanoseconds are invalid
 int parse_key( char * str, int length, struct index_key * out_key );
 
+// returns:
+//	-1; key1 < key2
+//	0 ; key1 == key2
+//	1 ; key1 > key2
+int index_key_cmp( struct index_key * key1, struct index_key * key2 );
+
 // in theory this should be enough for any path string.
 #define PATH_BUFFER_SIZE 4096
-
-// things needed...
-
-// min macro from: https://stackoverflow.com/questions/3437404/min-and-max-in-c
-#define min(a,b) \
-   ({ __typeof__ (a) _a = (a); \
-       __typeof__ (b) _b = (b); \
-     _a < _b ? _a : _b; })
 
 #endif /* __CHRONOS_H__ */
