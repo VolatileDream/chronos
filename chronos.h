@@ -110,11 +110,12 @@ int chronos_iterate( struct chronos_handle * handle, struct chronos_iterator * o
 
 int chronos_iterate_next( struct chronos_handle * handle, struct chronos_iterator * iter, struct index_entry * out_entry );
 
-// Attempts to format the key in the buffer.
+// Attempts to format the key in the buffer. Writes at most `max` characters into the buffer,
+// this includes the null byte.
 //
 // Returns:
-//	* the number of bytes taken up by the formatted key
-//	* 0 if formatting the key ran out of space
+//	* the number of bytes taken up by the formatted key, excluding the null byte
+//	* 0 if formatting the key ran out of space (including space for the null byte)
 int format_key( char * str, int max, struct index_key * key );
 // Attempts to parse the key in the buffer.
 //
