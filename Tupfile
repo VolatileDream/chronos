@@ -6,7 +6,9 @@ CFLAGS += -Werror
 
 FLAGS += -D_GNU_SOURCE
 
+LIBS += -lrt
+
 !cc = |> gcc $(CFLAGS) -std=c99 $(FLAGS) -c %f -o %o |> %B.o
 
 : foreach *.c |> !cc |> 
-: *.o |> gcc %f -o %o |> chronos
+: *.o |> gcc %f $(LIBS) -o %o |> chronos
