@@ -45,6 +45,18 @@ static int usage( int argc, char** argv ){
 	return 0;
 }
 
+static void bad_key( int rc, char * key ){
+	fprintf( stderr, "couldn't parse key value: %s\n", key);
+	switch(rc){
+		case 1:
+			fprintf( stderr, "invalid date-time\n" );
+			break;
+		case 2:
+			fprintf( stderr, "invalid nanoseconds\n" );
+			break;
+	}
+}
+
 static int init( int argc, char** argv ){
 
 	char * dir = argv[2];
@@ -106,7 +118,7 @@ static int do_get( struct chronos_handle * handle, int argc, char** argv ){
 	struct index_key key;
 	int rc = parse_key( argv[3], strlen( argv[3] ), & key );
 	if( rc != 0 ){
-		fprintf( stderr, "couldn't parse the key\n" );
+		bad_key(rc, argv[3]);
 		return rc;
 	}
 
@@ -151,7 +163,7 @@ static int do_append( struct chronos_handle * handle, int argc, char** argv ){
 		if( rc == 0 ){
 			key_parsed = 1;
 		} else {
-			fprintf( stderr, "bad key value: %s\n", argv[4]);
+			bad_key(rc, argv[4]);
 			return rc;
 		}
 	}

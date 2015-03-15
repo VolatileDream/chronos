@@ -424,6 +424,48 @@ int format_key( char * buf, int max, struct index_key * key ){
 	return strf_count + sn_count;
 }
 
+// parses the string passed as a fraction of a second in nanoseconds.
+// ex:
+//    "0.3" -> 300000000ns
+// returns
+//  error: non-zero, undefined value in out_value
+//  sucess: zero, nanoseconds parsed go into out_value
+int parse_nanoseconds( char * str, int length, uint32_t * out_value ){
+
+	uint32_t out = 0;
+
+	int index=0;
+	for(; index < length; index++){
+		if( '0' <= str[index] && str[index] <= '9' ){
+			out = out * 10 + (str[index] - '0');
+		} else {
+			break;
+		}
+	}
+
+	if( index != length ){
+		// unable to correctly parse string
+		return 2;
+	}
+
+	// push the second fraction to be a correct fraction, since we assume
+	// that nanoseconds are the largest value this corrects the string:
+	// "0.3" and pretends we got "0.300000000" instead.
+	for(;index < 9; index++){
+		out *= 10;
+	}
+
+	*out_value = out;
+
+	// check that the nanoseconds are within the expected range.
+	// if the value is too big, it's incorrect.
+	if( 0 <= out && out <= 999999999 ){
+		return 0;
+	} else {
+		return 1;
+	}
+}
+
 #include <stdlib.h>
 
 int parse_key( char * str, int length, struct index_key * out_key ){
@@ -440,12 +482,8 @@ int parse_key( char * str, int length, struct index_key * out_key ){
 	// convert to number of seconds since epoch
 	out_key->seconds = timegm( &time );
 
-	char * end;
-	// +1 because the start of the string will be a '.' 
-	out_key->nanos = strtol( end_of_date + 1, &end, 10 );
-
-	if( *end != 0 ){ // check that strtol ate until the end of the string
-		// couldn't parse until the end of the string
+	// +1 because the start of the string will be a '.'
+	if( parse_nanoseconds( end_of_date + 1, strlen(end_of_date+1), & out_key->nanos ) ){
 		return 2;
 	}
 
