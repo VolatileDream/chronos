@@ -4,6 +4,9 @@
 // printf
 #include <stdio.h>
 
+// exit
+#include <stdlib.h>
+
 // strncmp
 #include <string.h>
 
@@ -34,10 +37,11 @@ static int usage( int argc, char** argv ){
 	printf("   append a value to the log\n");
 	printf("   -t allows the user to change the time that the entry reports being inserted.\n\n");
 
-	printf(" iterate <directory> [ d1 [, d2 [, d3 ]]]\n");
-	printf("   prints out keys and entries as follows:\n");
-	printf("     <d1>key<d2>entry<d3>\n");
-	printf("   if any/all of d1, d2, or d3 are omitted, the empty string is printed instead\n");
+	printf(" iterate <directory> print-format\n");
+	printf("   print-format: a string of what to output\n");
+	printf("     %%k - outputs the key\n");
+	printf("     %%v - outputs the content\n");
+	printf("     %%%% - outputs a literal %%\n");
 	
 	printf("\n");
 
@@ -266,23 +270,38 @@ void full_iter( int argc, char** argv, struct chronos_handle * handle, struct in
 	char buffer[1024];
 	int length = format_key( buffer, sizeof(buffer), & entry->key );
 
-	if( argc > 3 ){
-		write( 1, argv[3], strlen( argv[3] ) );
-	}
+	char * out = argv[3];
+	size_t len = strlen(out);
 
-	write( 1, buffer, length );
-
-	if( argc > 4 ){
-		write( 1, argv[4], strlen( argv[4] ) );
-	}
-
-	chronos_output( handle, entry, 1 );
-
-	if( argc > 5 ){
-		write( 1, argv[5], strlen( argv[5] ) );
+	for(int i=0; i < len; i++){
+		if( out[i] == '%' ){
+			i++; // consume the char, this is an escape code
+			switch( out[i] ){
+				case '%':
+					write( 1, "%", 1 );
+					break;
+				case 'k':
+					write( 1, buffer, length );
+					break;
+				case 'v':
+					chronos_output( handle, entry, 1 );
+					break;
+				default:
+					// this is undefined behaviour
+					fprintf( stderr, "bad format string at index %d: %s\n", i, out );
+					exit(1);
+					break;
+			}
+		} else {
+			write( 1, out + i, 1 );
+		}
 	}
 }
 int iterate( int argc, char** argv ){
+	if ( argc < 4 ){
+		fprintf( stderr, "insufficient arguments, print-format required\n");
+		return 1;
+	}
 	return do_iterate( argc, argv, & full_iter );
 }
 
