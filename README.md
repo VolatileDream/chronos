@@ -18,7 +18,7 @@ Chronos is intended to be used in a scripted environment, and supports a few com
 * `chronos list <directory>` lists all of the times at which data was inserted into Chronos.
 * `chronos get <directory> <key>` retrieves a single key and writes it to stdout.
 * `chronos append <directory> [-t key]` inserts new data into the Chronos log, reading the data from stdin.
-* `chronos iterate <directory> [d1 [, d2 [, d3]]]` prints all the entries in the log to standard output, using specified delimiters.
+* `chronos iterate <directory> <print-format>` prints all the entries in the log to standard output, using specified print format.
 
 Chronos is multi-process safe, and accomplishes this by using file locks on the directory that houses it's index and data store.
 
@@ -34,13 +34,15 @@ while true ; do cat 1kfile | chronos append ./dir ; done
 
 Since one of the goals of Chronos is efficiency, here are the running times for the various commands:
 
-Command | Running Time | Comments
-:-------|:-------------|:--------
-append  | O( 1 + m )   | m = time to read the data in and write it to file
-count   | O( 1 )       |
-get     | O( log(n) + m ) | m = time to write the data to stdout
-init    | O( 1 )       |
-iterate | O( n )       |
-last    | O( 1 )       |
-list    | O( n )       |
+Command | Running Time
+:-------|:------------
+append  | O( 1 + io )
+count   | O( 1 )
+get     | O( log(n) + io )
+init    | O( 1 )
+iterate | O( n * io )
+last    | O( 1 )
+list    | O( n )
+
+`n = # of keys`, `io = time to write data to stdout`
 
