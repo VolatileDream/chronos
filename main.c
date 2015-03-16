@@ -200,7 +200,7 @@ static int do_last( struct chronos_handle * handle, int argc, char** argv ){
 	int rc = chronos_entry( handle, -1, & entry );
 	if( rc != 0 ){
 		if( rc != C_NO_MORE_ELEMENTS ){
-			perror("chronos_append");
+			perror("chronos_entry");
 		}
 		return rc;
 	}

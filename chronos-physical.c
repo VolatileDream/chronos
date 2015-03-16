@@ -4,33 +4,31 @@
 #include <stdint.h>
 #include <unistd.h>
 
+// splice
+#include <fcntl.h>
+
 // copies everything from 'fd_from' and writes it to 'fd_to'
-static int copy_fd( int fd_from, int fd_to, uint32_t *out_size ){
+static int copy_fd( int fd_from, int fd_to, loff_t offset, uint32_t *out_size ){
 
 	uint32_t length = 0;
 
-	char buffer[ 1048 ];
-	ssize_t read_length = 0;
-
 	// read from stdin
-	while( (read_length = read( fd_from, buffer, sizeof(buffer) )) ){
+	while( 1 ){
 
-		if( read_length == -1 ){
+		ssize_t read = splice( fd_from, NULL, fd_to, &offset, 0xffffffff, 0 );
+
+		if( read == 0 ){
+			break;
+		}
+
+		if( read == -1 ){
 			return C_IO_READ_ERROR;
 		}
 
 		// keep updating the length of the entry
-		length += read_length;
-
-		ssize_t wrote = 0;
-		while( read_length - wrote > 0 ){
-			int rc = write( fd_to, buffer + wrote, read_length - wrote );
-			if( rc == -1 ){
-				return C_IO_WRITE_ERROR;
-			}
-			wrote += rc;
-		}
+		length += read;
 	}
+
 	*out_size = length;
 	return 0;
 }
@@ -92,8 +90,15 @@ int chronos_append( struct chronos_handle * handle, struct index_key * maybe_key
 		return rc;
 	}
 
+	uint32_t output_offset = 0;
+	rc = chronos_stat( handle, NULL, & output_offset );
+
+	if( rc != 0 ){
+		return rc;
+	}
+
 	uint32_t total_length;
-	rc = copy_fd( fd_in, handle->data_fd, & total_length );
+	rc = copy_fd( fd_in, handle->data_fd, output_offset, & total_length );
 
 	if( rc != 0 ){
 		return rc;

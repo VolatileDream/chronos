@@ -21,6 +21,9 @@
 // free
 #include <stdlib.h>
 
+// sendfile
+#include <sys/sendfile.h>
+
 // min macro from: https://stackoverflow.com/questions/3437404/min-and-max-in-c
 #define min(a,b) \
    ({ __typeof__ (a) _a = (a); \
@@ -145,34 +148,6 @@ static int get_dir_lock( struct chronos_handle * handle ){
 	return 0;
 }
 
-static int write_out( int fd_in, int fd_out, int count ){
-	char buffer[1024];
-
-	while( count > 0 ){
-		int size = min( sizeof(buffer), count );
-
-		int read_count = read( fd_in, buffer, size );
-
-		if( read_count == -1 ){
-			return C_IO_READ_ERROR;
-		}
-
-		int wrote = 0;
-
-		while( wrote < read_count ){
-			int rc = write( fd_out, buffer + wrote, read_count - wrote );
-			if( rc == -1 ){
-				return C_IO_WRITE_ERROR;
-			}
-			wrote += rc;
-		}
-
-		count -= read_count;
-	}
-
-	return 0;
-}
-
 int require_open_file( struct chronos_handle * handle, enum chronos_file file, enum chronos_flags flag ){
 
 	int * fd_ptr = NULL;
@@ -220,8 +195,10 @@ int require_open_file( struct chronos_handle * handle, enum chronos_file file, e
 		// to read from them later. This won't cause problems with writing to the file, because
 		// we use a flock on the directory.
 
-		// we always append when we write, and create the file if it doesn't already exist.
-		int fd = open( buffer, O_RDWR | O_APPEND | O_CREAT, FILE_MODE );
+		// create the file if it doesn't already exist. we don't specify O_APPEND because that
+		// causes problems with the more efficient splice(2) syscall (used to write data to
+		// the data file).
+		int fd = open( buffer, O_RDWR | O_CREAT, FILE_MODE );
 
 		if( fd == -1 ){
 			return C_FILE_OPEN_FAILED;
@@ -333,9 +310,19 @@ int chronos_output( struct chronos_handle * handle, struct index_entry * entry, 
 		return rc;
 	}
 
-	lseek( handle->data_fd, entry->position, SEEK_SET );
+	off_t offset = entry->position;
+	size_t length = entry->length;
 
-	return write_out( handle->data_fd, fd_out, entry->length );
+	while( length > 0 ){
+		ssize_t written = sendfile( fd_out, handle->data_fd, &offset, entry->length );
+		if( written < 0 ){
+			return 1;
+		}
+		offset += written;
+		length -= written;
+	}
+
+	return 0;
 }
 
 int chronos_stat( struct chronos_handle * handle, int * out_entry_count, uint32_t * out_data_size ){
