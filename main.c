@@ -314,16 +314,16 @@ typedef struct command_t {
 } command_t;
 
 static command_t commands[] = {
+	{ .name = "append", .func = &append },
+	{ .name = "get", .func = &get },
+	{ .name = "last", .func = &last },
+	{ .name = "list", .func = &list },
+	{ .name = "iterate", .func = &iterate },
+	{ .name = "count", .func = &count },
 	{ .name = "--help", .func = &usage },
 	{ .name = "-h", .func = &usage },
 	{ .name = "?", .func = &usage },
 	{ .name = "init", .func = &init },
-	{ .name = "count", .func = &count },
-	{ .name = "get", .func = &get },
-	{ .name = "append", .func = &append },
-	{ .name = "last", .func = &last },
-	{ .name = "list", .func = &list },
-	{ .name = "iterate", .func = &iterate },
 };
 
 int main(int argc, char** argv){
