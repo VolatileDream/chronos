@@ -11,6 +11,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+// + open
+#include <fcntl.h>
 
 // flock
 #include <sys/file.h>
@@ -34,6 +36,23 @@
 
 #define FILE_MODE (S_IRUSR | S_IWUSR)
 #define DIRECTORY_MODE ( FILE_MODE | S_IXUSR )
+
+static size_t concat( char * buffer, size_t len, char** strings, size_t count ){
+	size_t size = 0;
+	for( size_t index = 0; index < count && size < len ; index++ ){
+		char * pos = strings[index];
+		while( *pos && size < len ){
+			buffer[size] = *pos;
+			size++;
+			pos++;
+		}
+	}
+	if( size == len ){
+		size--;
+	}
+	buffer[size+1] = 0; // attach the NULL at the end
+	return size;
+}
 
 static int mkdir_r( const char * dir ){
 	// this is also a beautifully simple solution. mostly taken from:
@@ -183,8 +202,9 @@ int require_open_file( struct chronos_handle * handle, enum chronos_file file, e
 		// this is unlikely if we had to update the lock.
 		
 		// open it!
+		char * concats[3] = { handle->directory, "/", file_name };
 		char buffer[ PATH_BUFFER_SIZE ];
-		int size = snprintf(buffer, sizeof(buffer), "%s/%s", handle->directory, file_name );
+		int size = concat(buffer, sizeof(buffer), concats, 3 );
 
 		if( size > PATH_BUFFER_SIZE ){
 			errno = ENAMETOOLONG;
