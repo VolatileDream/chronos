@@ -11,4 +11,5 @@ LIBS += -lrt
 !cc = |> gcc $(CFLAGS) -std=c99 $(FLAGS) -c %f -o %o |> %B.o
 
 : foreach *.c |> !cc |> 
-: *.o |> gcc %f $(LIBS) -o %o |> chronos
+: chronos*.o main.o |> gcc %f $(LIBS) -o %o |> chronos
+: chronos*.o daemon.o |> gcc %f $(LIBS) -o %o |> chronosd
