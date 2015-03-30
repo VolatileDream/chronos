@@ -12,6 +12,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+// open
+#include <fcntl.h>
+
 // flock
 #include <sys/file.h>
 
@@ -225,7 +228,7 @@ int chronos_open( const char * dir, enum chronos_flags flags, struct chronos_han
 		return C_BAD_READ_WRITE_ARG;
 	}
 
-	int dir_fd;
+	int dir_fd = INVALID_FD;
 	int rc = require_directory( dir, flags, & dir_fd );
 
 	if( rc != 0 ){
