@@ -133,7 +133,6 @@ static int do_daemon( int argc, char** argv ){
 		}
 
 		close(fd);
-		printf("appended something\n");
 	}
 
 	rc = unlink(fifo_name);
