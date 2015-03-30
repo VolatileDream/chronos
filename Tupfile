@@ -2,12 +2,21 @@
 
 COMPILER = gcc
 
-CFLAGS += -g
 CFLAGS += -Wall
 CFLAGS += -Werror
+ifeq (@(DEBUG),yes)
+	CFLAGS += -g
+endif
 
 FLAGS += -D_GNU_SOURCE
-FLAGS += -O3
+ifeq (@(UNSAFE),yes)
+	FLAGS += -DUSE_UNSAFE_IO
+	FLAGS += -O3
+	FLAGS += -flto
+else
+	FLAGS += -O1
+endif
+
 LD_FLAGS += -static
 
 LIBS += -lrt

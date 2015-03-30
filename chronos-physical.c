@@ -125,8 +125,12 @@ int chronos_append( struct chronos_handle * handle, struct index_key * maybe_key
 		return C_IO_WRITE_ERROR;
 	}
 
+#ifndef USE_UNSAFE_IO
+
 	// make sure that all the changes are synced to disk
 	fsync( handle->dir_fd );
+
+#endif
 
 	return 0;
 }
