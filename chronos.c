@@ -140,6 +140,11 @@ static int get_dir_lock( struct chronos_handle * handle ){
 	int lock_flags = LOCK_SH;
 	if( handle->state & cs_read_write ){
 		lock_flags = LOCK_EX;
+	} else {
+		// for read only we don't need the lock.
+		// this is because of the way that chronos handles writing
+		// to the index and data file. See chronos-physical.c
+		return 0;
 	}
 	if( flock( handle->dir_fd, lock_flags ) != 0 ){
 		return C_LOCK_FAILED;
