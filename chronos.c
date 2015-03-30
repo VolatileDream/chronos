@@ -260,6 +260,13 @@ int chronos_open( const char * dir, enum chronos_flags flags, struct chronos_han
 
 	*out_handle = local_handle;
 
+	if( read_write_flag == cs_read_write ){
+		// special case, fast path write access things.
+		// since this hasn't been requested yet, just hope it works.
+		require_open_file( out_handle, cf_data_store, cs_read_write );
+		require_open_file( out_handle, cf_index, cs_read_write );
+	}
+
 	return 0;
 }
 
