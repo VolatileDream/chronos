@@ -270,6 +270,8 @@ void full_iter( int argc, char** argv, struct chronos_handle * handle, struct in
 	char buffer[1024];
 	int length = format_key( buffer, sizeof(buffer), & entry->key );
 
+	int rc = 0;
+
 	char * out = argv[3];
 	size_t len = strlen(out);
 
@@ -278,22 +280,25 @@ void full_iter( int argc, char** argv, struct chronos_handle * handle, struct in
 			i++; // consume the char, this is an escape code
 			switch( out[i] ){
 				case '%':
-					write( 1, "%", 1 );
+					rc = write( 1, "%", 1 );
 					break;
 				case 'k':
-					write( 1, buffer, length );
+					rc = write( 1, buffer, length );
 					break;
 				case 'v':
-					chronos_output( handle, entry, 1 );
+					rc = chronos_output( handle, entry, 1 );
 					break;
 				default:
 					// this is undefined behaviour
 					fprintf( stderr, "bad format string at index %d: %s\n", i, out );
-					exit(1);
 					break;
 			}
 		} else {
-			write( 1, out + i, 1 );
+			rc = write( 1, out + i, 1 );
+		}
+		if( rc != 0 ){
+			perror("chronos iterate print");
+			break;
 		}
 	}
 }
