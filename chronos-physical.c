@@ -59,7 +59,7 @@ int chronos_append( struct chronos_handle * handle, struct index_key * maybe_key
 
 	int rc;
 
-	uint32_t size;
+	uint32_t size = 0;
 	rc = chronos_stat( handle, NULL, & size );
 	if( rc != 0 ){
 		return rc;
@@ -90,15 +90,8 @@ int chronos_append( struct chronos_handle * handle, struct index_key * maybe_key
 		return rc;
 	}
 
-	uint32_t output_offset = 0;
-	rc = chronos_stat( handle, NULL, & output_offset );
-
-	if( rc != 0 ){
-		return rc;
-	}
-
 	uint32_t total_length;
-	rc = copy_fd( fd_in, handle->data_fd, output_offset, & total_length );
+	rc = copy_fd( fd_in, handle->data_fd, size, & total_length );
 
 	if( rc != 0 ){
 		return rc;
