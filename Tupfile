@@ -1,15 +1,20 @@
 .gitignore
 
+COMPILER = gcc
+
 CFLAGS += -g
 CFLAGS += -Wall
 CFLAGS += -Werror
 
 FLAGS += -D_GNU_SOURCE
+FLAGS += -O3
+LD_FLAGS += -static
 
 LIBS += -lrt
 
-!cc = |> gcc $(CFLAGS) -std=c99 $(FLAGS) -c %f -o %o |> %B.o
+!cc = |> $(COMPILER) $(CFLAGS) -std=c99 $(FLAGS) -c %f -o %o |> %B.o
+!prog = |> $(COMPILER) %f $(FLAGS) $(LD_FLAGS) $(LIBS) -o %o |> 
 
 : foreach *.c |> !cc |> 
-: chronos*.o main.o |> gcc %f $(LIBS) -o %o |> chronos
-: chronos*.o daemon.o |> gcc %f $(LIBS) -o %o |> chronosd
+: chronos*.o main.o |> !prog |> chronos
+: chronos*.o daemon.o |> !prog |> chronosd
