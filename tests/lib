@@ -1,3 +1,7 @@
+err(){
+	echo "$@" > /dev/stderr
+}
+
 no(){
 	"$@" > /dev/null 2> /dev/null
 	return $?
@@ -17,11 +21,23 @@ _assert_variable(){
 	_assert [ ! -z "$STR" ]
 }
 
+# assertion for things that have stdout output
+_assert_output(){
+	if [ $# -ne 0 ]; then
+		"$@" 2> /dev/null
+		if [ $? -ne 0 ]; then
+			echo "Error assertion failed: $@"
+			err "Error assertion failed: $@"
+		fi
+	fi
+}
+
 _assert(){
 	if [ $# -ne 0 ]; then
 		"$@" > /dev/null 2> /dev/null
 		if [ $? -ne 0 ]; then
-			echo "Error assertion failed: $@" > /dev/stderr
+			echo "Error assertion failed: $@"
+			err "Error assertion failed: $@"
 		else
 			echo "$@"
 		fi

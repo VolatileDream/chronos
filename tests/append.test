@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+source "$TEST_DIR/lib"
+
+do_append(){
+	local INPUT="$1" ; shift
+	echo -n "$INPUT" | _assert ./chronos append "$DIR"
+
+	# both files should have content
+	_assert [ -s "$DIR/index" ]
+	_assert [ -s "$DIR/data" ]
+
+	local LAST=`_assert_output ./chronos last "$DIR"`
+
+	local OUTPUT=`_assert_output ./chronos get "$DIR" "$LAST"`
+
+	_assert [ "$INPUT" = "$OUTPUT" ]
+}
+
+
+_assert_variable TEST_DIR
+DIR="$TEST_DIR/init.d"
+
+_assert ./chronos init "$DIR"
+
+do_append abc
+do_append def
+
+rm -r "$DIR"
