@@ -12,3 +12,5 @@ LIBS += -lrt
 
 : foreach *.c |> !cc |> 
 : *.o |> gcc %f $(LIBS) -o %o |> chronos
+
+: | tests/*.test chronos |> tests/run tests/ %o |> tests/test-report.txt

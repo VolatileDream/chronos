@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+TEST_DIR=""
+TEST_OUT=""
+
+run-one(){
+	echo "### $1"
+	"$TEST_DIR/$1.test"
+}
+
+run-tests(){
+	export TEST_DIR="$TEST_DIR"
+	ls "$TEST_DIR/" |
+	grep -E '\.test$' |
+	sed 's_\.test$__' |
+	while read test ; do
+		run-one "$test"
+	done
+}
+
+TEST_DIR="$1" ; shift
+TEST_OUT="$1" ; shift
+
+run-tests > "$TEST_OUT"
