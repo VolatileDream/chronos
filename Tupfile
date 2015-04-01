@@ -6,6 +6,8 @@ CFLAGS += -Wall
 CFLAGS += -Werror
 ifeq (@(DEBUG),yes)
 	CFLAGS += -g
+	CFLAGS += -Wpedantic
+	FLAGS += -DDEBUG
 endif
 
 FLAGS += -D_GNU_SOURCE
