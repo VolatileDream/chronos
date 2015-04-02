@@ -43,3 +43,6 @@ _assert(){
 		fi
 	fi
 }
+
+# supposed to be exported by tests/run
+_assert_variable TEST_DIR

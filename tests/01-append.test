@@ -17,6 +17,16 @@ do_append(){
 	_assert [ "$INPUT" = "$OUTPUT" ]
 }
 
+check_n(){
+	local N="$1" ; shift
+	local EXPECTED="$1" ; shift
+
+	local ITEM=`_assert_output ./chronos list "$DIR" | head -n $N | tail -1`
+
+	local CONTENT=`_assert_output ./chronos get "$DIR" "$ITEM"`
+
+	_assert [ "$CONTENT" = "$EXPECTED" ]
+}
 
 _assert_variable TEST_DIR
 DIR="$TEST_DIR/init.d"
@@ -25,5 +35,8 @@ _assert ./chronos init "$DIR"
 
 do_append abc
 do_append def
+
+# first one appended abc
+check_n 1 abc
 
 rm -r "$DIR"

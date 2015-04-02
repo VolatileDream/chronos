@@ -13,6 +13,7 @@ run-tests(){
 	ls "$TEST_DIR/" |
 	grep -E '\.test$' |
 	sed 's_\.test$__' |
+	sort -u |
 	while read test ; do
 		run-one "$test"
 	done
