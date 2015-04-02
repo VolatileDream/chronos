@@ -1,0 +1,35 @@
+err(){
+	echo "$@" >&2 ; #>> /dev/stderr
+}
+
+no(){
+	"$@" > /dev/null 2> /dev/null
+	return $?
+}
+
+_assert_function(){
+	_assert declare -f -F "$1"
+}
+
+_assert_variable(){
+	VAR="$1"
+	# check if the variable exists usually this is done by checking:
+	#  [ -z "${var+1}" ]
+	# which gives the string 1, if var is set. we use this eval
+	# monstrosity because we don't know which variable we want to check.
+	STR="$( eval echo \${$VAR+1} )"
+	_assert [ ! -z "$STR" ]
+}
+
+_assert(){
+	if [ $# -ne 0 ]; then
+		err "$@"
+		"$@" 2> /dev/null
+		if [ $? -ne 0 ]; then
+			err "Error assertion failed: $@"
+		fi
+	fi
+}
+
+# supposed to be exported by tests/run
+_assert_variable TEST_DIR

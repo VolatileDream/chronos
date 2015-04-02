@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+source tests/lib
+
+do_init(){
+	local DIR="$1" ; shift
+
+	_assert [ ! -d "$DIR" ]
+
+	_assert ./chronos init "$DIR"
+
+	_assert [ -d "$DIR" ]
+
+	# files have to exist and have size == 0
+	#_assert [ -f "$DIR/index" -a ! -s "$DIR/index" ]
+	#_assert [ -f "$DIR/data" -a ! -s "$DIR/data" ]
+
+	rm -r "$DIR"
+}
+
+do_init "$TEST_DIR/init.d"
+
+_assert [ ! -d "$TEST_DIR/init.d" ]
+do_init "$TEST_DIR/init.d/check/for/recursive/create"
+# correctly cleanup after second do_init
+rm -r "$TEST_DIR/init.d/"
+
+
