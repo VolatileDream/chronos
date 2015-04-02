@@ -4,6 +4,8 @@ TEST_DIR=""
 TEST_OUT=""
 
 run-one(){
+	exec 2<&-
+	exec 2>&1
 	echo "### $1"
 	"$TEST_DIR/$1.test"
 }
