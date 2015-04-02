@@ -291,14 +291,15 @@ void full_iter( int argc, char** argv, struct chronos_handle * handle, struct in
 				default:
 					// this is undefined behaviour
 					fprintf( stderr, "bad format string at index %d: %s\n", i, out );
+					rc = -1;
 					break;
 			}
 		} else {
 			rc = write( 1, out + i, 1 );
 		}
-		if( rc != 0 ){
+		if( rc == -1 ){
 			perror("chronos iterate print");
-			break;
+			exit(1);
 		}
 	}
 }
