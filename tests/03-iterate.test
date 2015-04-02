@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+source "$TEST_DIR/lib"
+
+data(){
+	echo -n 123 | _assert ./chronos append "$DIR"
+	echo -n 456 | _assert ./chronos append "$DIR"
+	echo -n 789 | _assert ./chronos append "$DIR"
+	echo -n 101 | _assert ./chronos append "$DIR"
+}
+
+only_value(){
+	local EXPECTED="123456789101"
+	local DATA=`_assert ./chronos iterate "$DIR" '%v'`
+
+	_assert [ "$EXPECTED" = "$DATA" ]
+}
+
+should_error(){
+	_assert_not ./chronos iterate "$DIR" '%'
+	_assert_not ./chronos iterate "$DIR" '%a'
+	_assert_not ./chronos iterate "$DIR" '%b'
+}
+
+_assert_variable TEST_DIR
+DIR="$TEST_DIR/init.d"
+
+_assert ./chronos init "$DIR"
+
+data
+only_value
+should_error
+
+_assert ./chronos iterate "$DIR" '%k' > /dev/null
+
+rm -r "$DIR"
