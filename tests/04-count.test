@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+source "$TEST_DIR/lib"
+
+count=0
+
+same(){
+	local c=`_assert ./chronos count "$DIR"`
+	_assert [ $count -eq $c ]
+}
+
+another(){
+	count=$((count+1))
+	echo -n 123 | _assert ./chronos append "$DIR"
+	same
+}
+
+_assert_variable TEST_DIR
+DIR="$TEST_DIR/init.d"
+
+_assert ./chronos init "$DIR"
+
+# should be the same at zero
+same
+
+another
+another
+another
+another
+another
+
+rm -r "$DIR"

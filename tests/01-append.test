@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+
+source "$TEST_DIR/lib"
+
+do_append(){
+	local INPUT="$1" ; shift
+	echo -n "$INPUT" | _assert ./chronos append "$DIR"
+
+	# both files should have content
+	_assert [ -s "$DIR/index" ]
+	_assert [ -s "$DIR/data" ]
+
+	local LAST=`_assert ./chronos last "$DIR"`
+
+	local OUTPUT=`_assert ./chronos get "$DIR" "$LAST"`
+
+	_assert [ "$INPUT" = "$OUTPUT" ]
+}
+
+check_nth(){
+	local N="$1" ; shift
+	local EXPECTED="$1" ; shift
+
+	local ITEM=`_assert ./chronos list "$DIR" | head -n $N | tail -1`
+
+	local CONTENT=`_assert ./chronos get "$DIR" "$ITEM"`
+
+	_assert [ "$CONTENT" = "$EXPECTED" ]
+}
+
+_assert_variable TEST_DIR
+DIR="$TEST_DIR/init.d"
+
+_assert ./chronos init "$DIR"
+
+do_append abc
+do_append def
+
+# first one appended abc
+check_nth 1 abc
+
+rm -r "$DIR"

@@ -27,5 +27,8 @@ LIBS += -lrt
 !prog = |> $(COMPILER) %f $(FLAGS) $(LD_FLAGS) $(LIBS) -o %o |> 
 
 : foreach *.c |> !cc |> 
+
 : chronos*.o main.o |> !prog |> chronos
 : chronos*.o daemon.o |> !prog |> chronosd
+
+: | tests/*.test tests/run tests/lib chronos |> tests/run tests/ %o |> tests/test-report.txt
