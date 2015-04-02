@@ -12,12 +12,12 @@ _assert_function(){
 }
 
 _assert_variable(){
-	VAR="$1"
+	local VAR="$1"
 	# check if the variable exists usually this is done by checking:
 	#  [ -z "${var+1}" ]
 	# which gives the string 1, if var is set. we use this eval
 	# monstrosity because we don't know which variable we want to check.
-	STR="$( eval echo \${$VAR+1} )"
+	local STR="$( eval echo \${$VAR+1} )"
 	_assert [ ! -z "$STR" ]
 }
 
