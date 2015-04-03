@@ -20,6 +20,9 @@ Chronos is intended to be used in a scripted environment, and supports a few com
 * `chronos append <directory> [-t key]` inserts new data into the Chronos log, reading the data from stdin.
 * `chronos iterate <directory> <print-format>` prints all the entries in the log to standard output, using specified print format.
 
+* `chronosd daemon <directory>` starts a daemon that accepts appends via fifo, avoids much of the `chronos apppend` overhead.
+* `chronosd append <directory>` works as `chronos append` would, except that it communicates to the chronos daemon.
+
 Chronos is multi-process safe, and accomplishes this by using file locks on the directory that houses it's index and data store.
 
 ### Performance
@@ -44,5 +47,6 @@ iterate | O( n * io )
 last    | O( 1 )
 list    | O( n )
 
-`n = # of keys`, `io = time to write data to stdout`
+`n = # of keys`, `io = time to write data to stdout or datastore`
 
+Note that chranosd has identical runtimes to chronos, except it attempts to avoid much of the process overhead that bottlenecks how quickly `chronos append` can execute.

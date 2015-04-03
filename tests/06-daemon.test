@@ -8,13 +8,13 @@ start(){
 	_assert [ $PID -ne 0 ]
 	SECONDS=0
 	START_TIME=0
-}
-stop(){
-	if [ $START_TIME -eq $SECONDS ]; then
-		# disgusting, but it ensures that the fifo exist checks work
-		sleep 0.1
+	if [ ! -p "$DIR/fifo" ]; then
+		# give chronosd a moment to start up
+		sleep 0.01
 	fi
 	_assert [ -p "$DIR/fifo" ]
+}
+stop(){
 	kill -SIGTERM $PID
 	_assert [ ! -p "$DIR/fifo" ]
 	# in case it doesn't actually manage it,
