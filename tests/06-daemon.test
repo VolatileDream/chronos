@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+
+source "$TEST_DIR/lib"
+
+start(){
+	./chronosd daemon "$DIR" &
+	PID=$!
+	_assert [ $PID -ne 0 ]
+	SECONDS=0
+	START_TIME=0
+}
+stop(){
+	if [ $START_TIME -eq $SECONDS ]; then
+		# disgusting, but it ensures that the fifo exist checks work
+		sleep 0.1
+	fi
+	_assert [ -p "$DIR/fifo" ]
+	kill -SIGTERM $PID
+	_assert [ ! -p "$DIR/fifo" ]
+	# in case it doesn't actually manage it,
+	# because otherwise tup has serious problems
+	if [ -p "$DIR/fifo" ]; then
+		rm "$DIR/fifo"
+	fi
+	PID=0
+}
+
+append(){
+	echo 123 | _assert ./chronosd append "$DIR"
+}
+
+_assert_variable TEST_DIR
+DIR="$TEST_DIR/init.d"
+
+_assert ./chronos init "$DIR"
+
+# check start stop
+start
+stop
+
+# check append
+start
+append
+stop
+
+# shouldn't work without daemon
+echo abc | _assert_not ./chronosd append "$DIR"
+
+# check chronos read, if this doesn't work, it will deadlock. heh
+start
+append
+_assert ./chronos list "$DIR"
+stop
+
+rm -r "$DIR"

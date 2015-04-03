@@ -1,6 +1,9 @@
 
 #include "chronos.h"
 
+// errno
+#include <errno.h>
+
 #include <stdint.h>
 
 // printf
@@ -20,6 +23,9 @@
 // mkfifo
 #include <sys/types.h>
 #include <sys/stat.h>
+
+// sigaction(2)
+#include <signal.h>
 
 static int usage( int argc, char** argv ){
 	printf("usage: %s <command> [args ...] \n\n", argv[0] );
@@ -91,6 +97,35 @@ static int do_append( int argc, char ** argv ){
 	return 0;
 }
 
+// stored globally so that the sigaction handler can unlink the fifo when it
+// runs, and therefore cause the program to exit cleanly.
+static char fifo_name[ PATH_BUFFER_SIZE ];
+
+static void term_handle( int sig ){
+#ifdef DEBUG
+	int rc = write( 1, "unlink\n", 7 );
+	(void)rc;
+#endif /* DEBUG */
+	unlink(fifo_name);
+}
+
+static void setup_signal_handler(){
+	sigset_t blocked_signals;
+	sigfillset( &blocked_signals );
+
+	struct sigaction action;
+		action.sa_handler = &term_handle;
+		action.sa_mask = blocked_signals; // all signals
+		action.sa_flags = 0;
+
+	int rc = sigaction( 15, &action, NULL); //sigterm
+	rc |= sigaction( 2, &action, NULL); // sigint
+	if( rc ){
+		perror("setup signal handler");
+		exit(1);
+	}
+}
+
 static int do_daemon( int argc, char** argv ){
 
 	char* dir = argv[2];
@@ -102,8 +137,6 @@ static int do_daemon( int argc, char** argv ){
 		return rc;
 	}
 
-	char fifo_name[ PATH_BUFFER_SIZE ];
-
 	// insert the chronos directory that we want, and then the fifo file
 	rc = fifo_get_name( fifo_name, sizeof(fifo_name), dir );
 
@@ -112,7 +145,12 @@ static int do_daemon( int argc, char** argv ){
 		return rc;
 	}
 
-	rc = mkfifo(fifo_name, 0770 );
+	// install signal handler
+
+	setup_signal_handler();
+
+	// R+W user, none to others
+	rc = mkfifo(fifo_name, 0600 );
 
 	if( rc != 0 ){
 		perror("daemon mkfifo");
@@ -122,7 +160,17 @@ static int do_daemon( int argc, char** argv ){
 	while(1){
 		int fd = open( fifo_name, O_RDONLY );
 		if( fd < 0 ){
-			perror("fifo open");
+			if( errno == ENOENT ){
+				// fifo was removed by our signal handler
+				// this is acceptable, so we will just exit.
+			} else if ( errno == EINTR ) {
+				// got interrupted by a signal, in this case
+				// we would normally attempt again, but there
+				// is only the unlink-fifo signal handler, so
+				// we exit instead.
+			} else {
+				perror("fifo open");
+			}
 			break;
 		}
 
