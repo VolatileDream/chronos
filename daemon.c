@@ -50,7 +50,7 @@ static int copy_fd( int fd_from, int fd_to ){
 	// read from stdin
 	while( 1 ){
 
-		ssize_t read = splice( fd_from, NULL, fd_to, NULL, 0xffffffff, 0 );
+		ssize_t read = splice( fd_from, NULL, fd_to, NULL, 0x0fffffff, 0 );
 
 		if( read == 0 ){
 			break;
