@@ -13,10 +13,26 @@ start(){
 		sleep 0.01
 	fi
 	_assert [ -p "$DIR/fifo" ]
+	_assert [ -f "$DIR/pid" ]
+	local pid=`cat "$DIR/pid" `
+	_assort [ "$PID" = "$pid" ]
 }
-stop(){
+
+killd(){
 	kill -SIGTERM $PID
 	_assert [ ! -p "$DIR/fifo" ]
+	# in case it doesn't actually manage it,
+	# because otherwise tup has serious problems
+	if [ -p "$DIR/fifo" ]; then
+		rm "$DIR/fifo"
+	fi
+	PID=0
+}
+
+stop(){
+	./chronosd stop "$DIR"
+	_assert [ ! -p "$DIR/fifo" ]
+	_assert [ ! -f "$DIR/pid" ]
 	# in case it doesn't actually manage it,
 	# because otherwise tup has serious problems
 	if [ -p "$DIR/fifo" ]; then
@@ -34,7 +50,11 @@ DIR="$TEST_DIR/init.d"
 
 _assert ./chronos init "$DIR"
 
-# check start stop
+# check start
+start
+killd
+
+# check stop
 start
 stop
 

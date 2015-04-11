@@ -1,5 +1,6 @@
 
 #include "chronos.h"
+#include "pid.h"
 
 // errno
 #include <errno.h>
@@ -42,8 +43,46 @@ static int usage( int argc, char** argv ){
 	return 0;
 }
 
-static int fifo_get_name( char* buffer, size_t len, char* directory ){
-	return snprintf(buffer, len, "%s/fifo", directory );
+#define get_fifo_name( buffer, len, dir ) \
+	get_name( buffer, len, dir, "%s/fifo" )
+
+#define get_pid_name( buffer, len, dir ) \
+	get_name( buffer, len, dir, "%s/pid" )
+
+static int get_name( char* buffer, size_t len, char* directory, char * format ){
+	return snprintf(buffer, len, format, directory );
+}
+
+static int do_stop( int argc, char ** argv ){
+	char* dir = argv[2];
+
+	char pid_name[PATH_BUFFER_SIZE];
+	int rc = get_pid_name( pid_name, sizeof(pid_name), dir );
+	if( rc >= sizeof(pid_name) ){
+		return rc;
+	}
+
+	pid_t pid = 0;
+
+	rc = pid_file_get_pid( pid_name, &pid );
+
+	switch(rc){
+		case PID_NO_FILE:
+			fprintf( stderr, "No daemon pid file.");
+			return 0;
+		case PID_READ:
+			fprintf( stderr, "Error reading pid file.");
+			return 1;
+		case 0:
+			rc = kill(pid, 2); // sigint
+			break;
+	}
+
+	if( rc != 0 ){
+		perror("stop daemon - kill");
+	}
+
+	return rc;
 }
 
 static int copy_fd( int fd_from, int fd_to ){
@@ -70,10 +109,10 @@ static int do_append( int argc, char ** argv ){
 	char fifo_name[ PATH_BUFFER_SIZE ];
 
 	// insert the chronos directory that we want, and then the fifo file
-	int rc = fifo_get_name( fifo_name, sizeof(fifo_name), dir );
+	int rc = get_fifo_name( fifo_name, sizeof(fifo_name), dir );
 
 	// truncated output	
-	if( rc > sizeof(fifo_name) ){
+	if( rc >= sizeof(fifo_name) ){
 		return rc;
 	}
 
@@ -138,16 +177,26 @@ static int do_daemon( int argc, char** argv ){
 	}
 
 	// insert the chronos directory that we want, and then the fifo file
-	rc = fifo_get_name( fifo_name, sizeof(fifo_name), dir );
-
+	rc = get_fifo_name( fifo_name, sizeof(fifo_name), dir );
 	// truncated output	
-	if( rc > sizeof(fifo_name) ){
+	if( rc >= sizeof(fifo_name) ){
+		return rc;
+	}
+
+	char pid_file [ PATH_BUFFER_SIZE ];
+	rc = get_pid_name( pid_file, sizeof(pid_file), dir );
+	if( rc >= sizeof(pid_file) ){
 		return rc;
 	}
 
 	// install signal handler
-
 	setup_signal_handler();
+
+	rc = pid_file_create( pid_file );
+	if( rc != 0 ){
+		perror("daemon pid-file");
+		return rc;
+	}
 
 	// R+W user, none to others
 	rc = mkfifo(fifo_name, 0600 );
@@ -183,6 +232,8 @@ static int do_daemon( int argc, char** argv ){
 		close(fd);
 	}
 
+	rc = pid_file_cleanup(pid_file);
+
 	rc = unlink(fifo_name);
 
 	chronos_close( &handle );
@@ -204,6 +255,7 @@ static command_t commands[] = {
 	{ .name = "?", .func = &usage },
 	{ .name = "append", .func = &do_append },
 	{ .name = "daemon", .func = &do_daemon },
+	{ .name = "stop", .func = &do_stop },
 };
 
 int main(int argc, char** argv){
