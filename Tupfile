@@ -29,6 +29,6 @@ LIBS += -lrt
 : foreach *.c |> !cc |> 
 
 : chronos*.o main.o |> !prog |> chronos
-: chronos*.o daemon.o |> !prog |> chronosd
+: chronos*.o pid.o daemon.o |> !prog |> chronosd
 
 : | tests/*.test tests/run tests/lib chronos chronosd |> tests/run tests/ %o |> tests/test-report.txt
