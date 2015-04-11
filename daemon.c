@@ -36,6 +36,9 @@ static int usage( int argc, char** argv ){
 	printf(" daemon <directory>\n");
 	printf("   start a daemon running for the chronos instance\n\n");
 
+	printf(" stop <directory>\n");
+	printf("   stop the running daemon for the chronos instance\n\n");
+
 	printf(" append <directory>\n");
 	printf("   append a value to the log\n");
 	printf("   -t allows the user to change the time that the entry reports being inserted.\n");
