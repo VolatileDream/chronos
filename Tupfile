@@ -8,6 +8,8 @@ ifeq (@(DEBUG),yes)
 	CFLAGS += -g
 	CFLAGS += -Wpedantic
 	FLAGS += -DDEBUG
+else
+	LD_FLAGS += -static
 endif
 
 FLAGS += -D_GNU_SOURCE
@@ -15,15 +17,12 @@ ifeq (@(UNSAFE),yes)
 	FLAGS += -DUSE_UNSAFE_IO
 	FLAGS += -O3
 	FLAGS += -flto
-else
-	FLAGS += -O1
 endif
 
-LD_FLAGS += -static
 
 LIBS += -lrt
 
-!cc = |> $(COMPILER) $(CFLAGS) -std=c99 $(FLAGS) -c %f -o %o |> %B.o
+!cc = |> $(COMPILER) -std=c99 $(CFLAGS) $(FLAGS) -c %f -o %o |> %B.o
 !prog = |> $(COMPILER) %f $(FLAGS) $(LD_FLAGS) $(LIBS) -o %o |> 
 
 : foreach *.c |> !cc |> 
