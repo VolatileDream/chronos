@@ -44,10 +44,10 @@ static int usage( int argc, char** argv ){
 }
 
 #define get_fifo_name( buffer, len, dir ) \
-	get_name( buffer, len, dir, "%s/fifo" )
+	get_name( buffer, len, dir, "%s/daemon-fifo" )
 
 #define get_pid_name( buffer, len, dir ) \
-	get_name( buffer, len, dir, "%s/pid" )
+	get_name( buffer, len, dir, "%s/daemon-pid" )
 
 static int get_name( char* buffer, size_t len, char* directory, char * format ){
 	return snprintf(buffer, len, format, directory );

@@ -8,35 +8,35 @@ start(){
 	_assert [ $PID -ne 0 ]
 	SECONDS=0
 	START_TIME=0
-	if [ ! -p "$DIR/fifo" ]; then
+	if [ ! -p "$FIFO" ]; then
 		# give chronosd a moment to start up
 		sleep 0.01
 	fi
-	_assert [ -p "$DIR/fifo" ]
-	_assert [ -f "$DIR/pid" ]
-	local pid=`cat "$DIR/pid" `
+	_assert [ -p "$FIFO" ]
+	_assert [ -f "$PIDF" ]
+	local pid=`cat "$PIDF" `
 	_assort [ "$PID" = "$pid" ]
 }
 
 killd(){
 	kill -SIGTERM $PID
-	_assert [ ! -p "$DIR/fifo" ]
+	_assert [ ! -p "$FIFO" ]
 	# in case it doesn't actually manage it,
 	# because otherwise tup has serious problems
-	if [ -p "$DIR/fifo" ]; then
-		rm "$DIR/fifo"
+	if [ -p "$FIFO" ]; then
+		rm "$FIFO"
 	fi
 	PID=0
 }
 
 stop(){
 	./chronosd stop "$DIR"
-	_assert [ ! -p "$DIR/fifo" ]
-	_assert [ ! -f "$DIR/pid" ]
+	_assert [ ! -p "$FIFO" ]
+	_assert [ ! -f "$PIDF" ]
 	# in case it doesn't actually manage it,
 	# because otherwise tup has serious problems
-	if [ -p "$DIR/fifo" ]; then
-		rm "$DIR/fifo"
+	if [ -p "$FIFO" ]; then
+		rm "$FIFO"
 	fi
 	PID=0
 }
@@ -45,8 +45,9 @@ append(){
 	echo 123 | _assert ./chronosd append "$DIR"
 }
 
-_assert_variable TEST_DIR
 DIR="$TEST_DIR/init.d"
+FIFO="$DIR/daemon-fifo"
+PIDF="$DIR/daemon-pid"
 
 _assert ./chronos init "$DIR"
 
