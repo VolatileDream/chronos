@@ -1,6 +1,9 @@
 #ifndef __PID_H__
 #define __PID_H__
 
+// for pid_t
+#include <sys/types.h>
+
 // error during creation of pidfile
 #define PID_CREATE 1
 
@@ -15,12 +18,12 @@
 
 // creates a pid  file in the specified location, guarentees that the file has
 // not existed before this function was called.
-int pid_file( char* file_name );
+int pid_file_create( char* file_name );
 
 // returns an error code, after it returns the file is guarenteed to have been deleted
-int cleanup_file( char* file_name );
+int pid_file_cleanup( char* file_name );
 
 // returns an error code, sticks the pid in out_pid
-int get_pid( char* file_name, int* out_pid );
+int pid_file_get_pid( char* file_name, pid_t* out_pid );
 
 #endif /* __PID_H__ */

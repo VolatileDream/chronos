@@ -22,7 +22,7 @@
 // (we use 4 because we want to print pids in decimal)
 #define PID_SIZE (sizeof(pid_t)*4)
 
-int pid_file( char* file_name ){
+int pid_file_create( char* file_name ){
 
 	int ret = 0;
 
@@ -34,12 +34,12 @@ int pid_file( char* file_name ){
 		return PID_CREATE;
 	}
 
-	// +1 for the null character at the end.
-	char pid_buffer[ PID_SIZE + 1 ];
+	// +1 for the newline + null character at the end.
+	char pid_buffer[ PID_SIZE + 2 ];
 
 	pid_t pid = getpid();
 
-	int pid_size = snprintf( pid_buffer, sizeof(pid_buffer), "%d", pid );
+	int pid_size = snprintf( pid_buffer, sizeof(pid_buffer), "%d\n", pid );
 
 	if( pid_size >= sizeof(pid_buffer) ){
 		// something was wrong with our buffer size allocation logic.
@@ -76,7 +76,7 @@ err:;
 	return ret;
 }
 
-int cleanup_file( char* file_name ){
+int pid_file_cleanup( char* file_name ){
 
 	// kind of hacky to open the file rather than use fstat to check if it
 	// exists, but this follows the pattern of other functions in this file.
@@ -90,7 +90,7 @@ int cleanup_file( char* file_name ){
 	return 0;
 }
 
-int get_pid( char* file_name, int* out_pid ){
+int pid_file_get_pid( char* file_name, int* out_pid ){
 
 	int ret = 0;
 
@@ -114,7 +114,7 @@ int get_pid( char* file_name, int* out_pid ){
 
 	pid_buffer[ length ] = 0; //stick the null byte on the end
 
-	int rc = scanf( "%d", out_pid );
+	int rc = sscanf(pid_buffer, "%d\n", out_pid );
 
 	if( rc != 1 ){
 		ret = PID_READ;
