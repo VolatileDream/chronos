@@ -20,15 +20,25 @@ Chronos is intended to be used in a scripted environment, and supports a few com
 * `chronos append <directory> [-t key]` inserts new data into the Chronos log, reading the data from stdin.
 * `chronos iterate <directory> <print-format>` prints all the entries in the log to standard output, using specified print format.
 
-Chronos is multi-process safe, and accomplishes this by using file locks on the directory that houses it's index and data store.
+* `chronosd daemon <directory>` starts a daemon that accepts appends via fifo, avoids much of the `chronos apppend` overhead.
+* `chronosd append <directory>` works as `chronos append` would, except that it communicates to the chronos daemon.
+
+Chronos is multi-process safe, and accomplishes this by using file locks on the directory that houses it's index and data store. Because of the way Chronos appends to it's physical datastore, it can allow reads to the datastore while writes are occuring (write data first, then index).
 
 ### Performance
 
-Chronos has been informally bench-marked and supports ~150 insertions per second under the following scenario:
+Chronos has been informally bench-marked and supports ~60 insertions per second under the following scenario:
 
 ```
 while true ; do cat 1kfile | chronos append ./dir ; done
+
+# or like so, if you want to use a daemon
+chronosd daemon ./dir &
+while true ; do cat 1kfile | chronosd append ./dir ; done
 ```
+
+The performance variant of Chronos can support a much higher rate of insertions, up to ~400 per second, by not requiring `fsync(2)`. `fsync(2)` asks the kernel to flush all data writes to the underlying Chronos datastorage before returning. This means that when `chronos(d) append` returns, the data may not have been written to disk (unlike the default variant).
+
 
 ### Running Time
 
@@ -44,5 +54,6 @@ iterate | O( n * io )
 last    | O( 1 )
 list    | O( n )
 
-`n = # of keys`, `io = time to write data to stdout`
+`n = # of keys`, `io = time to write data to stdout or datastore`
 
+Note that chranosd has identical runtimes to chronos, except it attempts to avoid much of the process overhead that bottlenecks how quickly `chronos append` can execute.

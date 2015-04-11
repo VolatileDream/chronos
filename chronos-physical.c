@@ -59,16 +59,36 @@ int chronos_append( struct chronos_handle * handle, struct index_key * maybe_key
 
 	int rc;
 
-	uint32_t size;
+	uint32_t size = 0;
 	rc = chronos_stat( handle, NULL, & size );
 	if( rc != 0 ){
 		return rc;
 	}
 
+	// index entry that we're going to write
 	struct index_entry entry;
 
+	// offset into the data file
 	entry.position = size;
 
+	// ensure we're capable of writing to the datastore
+	rc = require_open_file( handle, cf_data_store, cs_read_write );
+	if( rc != 0 ){
+		return rc;
+	}
+
+	uint32_t total_length = 0;
+	rc = copy_fd( fd_in, handle->data_fd, size, & total_length );
+
+	if( rc != 0 ){
+		return rc;
+	}
+
+	// update the length of the entry, based on the data we have written to
+	// the data file.
+	entry.length = total_length;
+
+	// check the key, this ensures that timestamps ~= time done writing
 	if( maybe_key ){
 
 		entry.key = * maybe_key;
@@ -80,49 +100,37 @@ int chronos_append( struct chronos_handle * handle, struct index_key * maybe_key
 		}
 	}
 
-	rc = key_is_later( handle, & entry.key );
-	if( rc != 0 ){
-		return rc;
-	}
-
-	rc = require_open_file( handle, cf_data_store, cs_read_write );
-	if( rc != 0 ){
-		return rc;
-	}
-
-	uint32_t output_offset = 0;
-	rc = chronos_stat( handle, NULL, & output_offset );
-
-	if( rc != 0 ){
-		return rc;
-	}
-
-	uint32_t total_length;
-	rc = copy_fd( fd_in, handle->data_fd, output_offset, & total_length );
-
-	if( rc != 0 ){
-		return rc;
-	}
-
-	entry.length = total_length;
-
-	// now write to the index file.
+	// open the file first (prevents dual open)
 	rc = require_open_file( handle, cf_index, cs_read_write );
 	if( rc != 0 ){
 		return rc;
 	}
 
+	// check that the key is ok to use.
+	rc = key_is_later( handle, & entry.key );
+	if( rc != 0 ){
+		return rc;
+	}
+
+	// since we might be on a little/big endian platform we have to sync to
+	// a platform agnostic data format (libc worries about this for us).
+
 	struct index_entry platform_agnostic;
 
 	make_platform_agnostic( & entry, & platform_agnostic );
 
+	// we hold an O_APPEND + write flock on the directory.
 	rc = write( handle->index_fd, & platform_agnostic, sizeof( platform_agnostic ) );
 	if( rc == -1 ){
 		return C_IO_WRITE_ERROR;
 	}
 
+#ifndef USE_UNSAFE_IO
+
 	// make sure that all the changes are synced to disk
 	fsync( handle->dir_fd );
+
+#endif
 
 	return 0;
 }

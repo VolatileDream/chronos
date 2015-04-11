@@ -1,16 +1,33 @@
 .gitignore
 
-CFLAGS += -g
+COMPILER = gcc
+
 CFLAGS += -Wall
 CFLAGS += -Werror
+ifeq (@(DEBUG),yes)
+	CFLAGS += -g
+	CFLAGS += -Wpedantic
+	FLAGS += -DDEBUG
+else
+	LD_FLAGS += -static
+endif
 
 FLAGS += -D_GNU_SOURCE
+ifeq (@(UNSAFE),yes)
+	FLAGS += -DUSE_UNSAFE_IO
+	FLAGS += -O3
+	FLAGS += -flto
+endif
+
 
 LIBS += -lrt
 
-!cc = |> gcc $(CFLAGS) -std=c99 $(FLAGS) -c %f -o %o |> %B.o
+!cc = |> $(COMPILER) -std=c99 $(CFLAGS) $(FLAGS) -c %f -o %o |> %B.o
+!prog = |> $(COMPILER) %f $(FLAGS) $(LD_FLAGS) $(LIBS) -o %o |> 
 
 : foreach *.c |> !cc |> 
-: *.o |> gcc %f $(LIBS) -o %o |> chronos
 
-: | tests/*.test tests/run tests/lib chronos |> tests/run tests/ %o |> tests/test-report.txt
+: chronos*.o main.o |> !prog |> chronos
+: chronos*.o pid.o daemon.o |> !prog |> chronosd
+
+: | tests/*.test tests/run tests/lib chronos chronosd |> tests/run tests/ %o |> tests/test-report.txt

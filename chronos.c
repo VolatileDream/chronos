@@ -12,6 +12,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+// open
+#include <fcntl.h>
+
 // flock
 #include <sys/file.h>
 
@@ -140,6 +143,11 @@ static int get_dir_lock( struct chronos_handle * handle ){
 	int lock_flags = LOCK_SH;
 	if( handle->state & cs_read_write ){
 		lock_flags = LOCK_EX;
+	} else {
+		// for read only we don't need the lock.
+		// this is because of the way that chronos handles writing
+		// to the index and data file. See chronos-physical.c
+		return 0;
 	}
 	if( flock( handle->dir_fd, lock_flags ) != 0 ){
 		return C_LOCK_FAILED;
@@ -220,7 +228,7 @@ int chronos_open( const char * dir, enum chronos_flags flags, struct chronos_han
 		return C_BAD_READ_WRITE_ARG;
 	}
 
-	int dir_fd;
+	int dir_fd = INVALID_FD;
 	int rc = require_directory( dir, flags, & dir_fd );
 
 	if( rc != 0 ){
@@ -251,6 +259,13 @@ int chronos_open( const char * dir, enum chronos_flags flags, struct chronos_han
 	}
 
 	*out_handle = local_handle;
+
+	if( read_write_flag == cs_read_write ){
+		// special case, fast path write access things.
+		// since this hasn't been requested yet, just hope it works.
+		require_open_file( out_handle, cf_data_store, cs_read_write );
+		require_open_file( out_handle, cf_index, cs_read_write );
+	}
 
 	return 0;
 }

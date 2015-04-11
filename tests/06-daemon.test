@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+
+source "$TEST_DIR/lib"
+
+start(){
+	./chronosd daemon "$DIR" &
+	PID=$!
+	_assert [ $PID -ne 0 ]
+	SECONDS=0
+	START_TIME=0
+	if [ ! -p "$FIFO" ]; then
+		# give chronosd a moment to start up
+		sleep 0.01
+	fi
+	_assert [ -p "$FIFO" ]
+	_assert [ -f "$PIDF" ]
+	local pid=`cat "$PIDF" `
+	_assort [ "$PID" = "$pid" ]
+}
+
+killd(){
+	kill -SIGTERM $PID
+	_assert [ ! -p "$FIFO" ]
+	# in case it doesn't actually manage it,
+	# because otherwise tup has serious problems
+	if [ -p "$FIFO" ]; then
+		rm "$FIFO"
+	fi
+	PID=0
+}
+
+stop(){
+	./chronosd stop "$DIR"
+	_assert [ ! -p "$FIFO" ]
+	_assert [ ! -f "$PIDF" ]
+	# in case it doesn't actually manage it,
+	# because otherwise tup has serious problems
+	if [ -p "$FIFO" ]; then
+		rm "$FIFO"
+	fi
+	PID=0
+}
+
+append(){
+	echo 123 | _assert ./chronosd append "$DIR"
+}
+
+DIR="$TEST_DIR/init.d"
+FIFO="$DIR/daemon-fifo"
+PIDF="$DIR/daemon-pid"
+
+_assert ./chronos init "$DIR"
+
+# check start
+start
+killd
+
+# check stop
+start
+stop
+
+# check append
+start
+append
+stop
+
+# shouldn't work without daemon
+echo abc | _assert_not ./chronosd append "$DIR"
+
+# check chronos read, if this doesn't work, it will deadlock. heh
+start
+append
+_assert ./chronos list "$DIR"
+stop
+
+rm -r "$DIR"
