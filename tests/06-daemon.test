@@ -15,7 +15,7 @@ start(){
 	_assert [ -p "$FIFO" ]
 	_assert [ -f "$PIDF" ]
 	local pid=`cat "$PIDF" `
-	_assort [ "$PID" = "$pid" ]
+	_assert [ "$PID" = "$pid" ]
 }
 
 killd(){
