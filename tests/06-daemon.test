@@ -20,6 +20,7 @@ start(){
 
 killd(){
 	kill -SIGTERM $PID
+	sleep 0
 	_assert [ ! -p "$FIFO" ]
 	# in case it doesn't actually manage it,
 	# because otherwise tup has serious problems
