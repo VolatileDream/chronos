@@ -39,6 +39,9 @@ while true ; do cat 1kfile | chronosd append ./dir ; done
 
 The performance variant of Chronos can support a much higher rate of insertions, up to ~400 per second, by not requiring `fsync(2)`. `fsync(2)` asks the kernel to flush all data writes to the underlying Chronos datastorage before returning. This means that when `chronos(d) append` returns, the data may not have been written to disk (unlike the default variant).
 
+### Concurrency
+
+Chronos is safe to use concurrently. Using `chronos append` or `chronod daemon` invokes `flock(3)` (exclusive file system locking) on the directory passed to it. All other `chronos(d)` commands _do not_ use `flock(3)`, and instead assume that `chronos(d)` can correctly write to the files in such a way that it will not get an inconsistent file.
 
 ### Running Time
 
