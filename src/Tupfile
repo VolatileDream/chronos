@@ -1,0 +1,8 @@
+.gitignore
+include_rules
+
+CFLAGS += -I ../libchronos
+CFLAGS += -I ../libpid
+
+: foreach *.c |> !cc |>
+

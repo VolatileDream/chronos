@@ -1,33 +1,8 @@
 .gitignore
+include_rules
 
-COMPILER = gcc
-
-CFLAGS += -Wall
-CFLAGS += -Werror
-ifeq (@(DEBUG),yes)
-	CFLAGS += -g
-	CFLAGS += -Wpedantic
-	FLAGS += -DDEBUG
-else
-	LD_FLAGS += -static
-endif
-
-FLAGS += -D_GNU_SOURCE
-ifeq (@(UNSAFE),yes)
-	FLAGS += -DUSE_UNSAFE_IO
-	FLAGS += -O3
-	FLAGS += -flto
-endif
-
-
-LIBS += -lrt
-
-!cc = |> $(COMPILER) -std=c99 $(CFLAGS) $(FLAGS) -c %f -o %o |> %B.o
-!prog = |> $(COMPILER) %f $(FLAGS) $(LD_FLAGS) $(LIBS) -o %o |> 
-
-: foreach *.c |> !cc |> 
-
-: chronos*.o main.o |> !prog |> chronos
-: chronos*.o pid.o daemon.o |> !prog |> chronosd
+: src/main.o libchronos/libchronos.a |> !prog |> chronos
+: src/daemon.o libpid/libpid.a libchronos/libchronos.a |> !prog |> chronosd
 
 : | tests/*.test tests/run tests/lib chronos chronosd |> tests/run tests/ %o |> tests/test-report.txt
+

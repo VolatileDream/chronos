@@ -1,0 +1,6 @@
+.gitignore
+include_rules
+
+: foreach *.c |> !cc |>
+
+: *.o |> !lib |> libchronos.a
