@@ -23,6 +23,8 @@
 #define C_NO_MORE_ELEMENTS 13 // if the requested entry doesn't exist
 #define C_PROVIDED_KEY_NOT_LATEST 14 // if the key provided isn't later than the last key
 
+#define C_IO_NEEDS_A_PIPE 15
+
 enum chronos_flags {
 	cs_read_only	= 0x1,
 	cs_read_write	= 0x2,

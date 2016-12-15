@@ -183,6 +183,8 @@ static int do_append( struct chronos_handle * handle, int argc, char** argv ){
 	if( rc != 0 ){
 		if( rc == C_PROVIDED_KEY_NOT_LATEST ){
 			fprintf( stderr, "can't insert keys before the last entry.\n");
+        } else if ( rc == C_IO_NEEDS_A_PIPE ) {
+			fprintf( stderr, "error reading stdin, it must be a pipe!\n");
 		} else {
 			perror("chronos_append");
 		}

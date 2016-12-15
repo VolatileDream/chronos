@@ -6,6 +6,7 @@
 
 // splice
 #include <fcntl.h>
+#include <errno.h>
 
 // copies everything from 'fd_from' and writes it to 'fd_to'
 static int copy_fd( int fd_from, int fd_to, loff_t offset, uint32_t *out_size ){
@@ -22,6 +23,9 @@ static int copy_fd( int fd_from, int fd_to, loff_t offset, uint32_t *out_size ){
 		}
 
 		if( read == -1 ){
+            if (errno == EINVAL) {
+                return C_IO_NEEDS_A_PIPE;
+            }
 			return C_IO_READ_ERROR;
 		}
 
