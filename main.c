@@ -13,6 +13,8 @@
 // write
 #include <unistd.h>
 
+#include <stdbool.h>
+
 static int usage( int argc, char** argv ){
 	printf("usage: %s <command> [args ...] \n\n", argv[0] );
 
@@ -216,11 +218,49 @@ static int last( int argc, char** argv ){
 	return do_open_func( argc, argv, & do_last );
 }
 
-typedef void (*ui_iterator)( int argc, char** argv, struct chronos_handle * handle, struct index_entry * entry );
+struct template_options {
+    bool has_key_formatted;
+    bool has_key_seconds;
+    int template_length;
+    char* template;
+};
+typedef void (*ui_iterator)(struct template_options* opts, struct chronos_handle* handle, struct index_entry* entry );
 
-static int do_iterate( int argc, char** argv, ui_iterator ui_iter ){
+static int build_template_options(struct template_options* opts, char* template) {
+    opts->has_key_formatted = false;
+    opts->has_key_seconds = false;
+    opts->template_length = 0;
+    opts->template = 0;
 
-	char * dir = argv[2];
+    int i;
+    for (i=0; template[i] != 0; i++) {
+        if (template[i] == '%') {
+			i++; // consume the char, this is an escape code
+            switch (template[i]) {
+                case 0:
+				default:
+					// this is undefined behaviour
+					fprintf( stderr, "bad format string at index %d: %s\n", i, template );
+					return -1;
+					break;
+                case '%':
+                case 'v':
+                    break;
+                case 'k':
+                    opts->has_key_formatted = true;
+                    break;
+                case 's':
+                    opts->has_key_seconds = true;
+                    break;
+            }
+        }
+    }
+    opts->template_length = i;
+    opts->template = template;
+    return 0;
+}
+
+static int do_iterate( char* dir, char* template, ui_iterator ui_iter ){
 
 	struct chronos_handle handle;
 
@@ -238,6 +278,13 @@ static int do_iterate( int argc, char** argv, ui_iterator ui_iter ){
 		return rc;
 	}
 
+    struct template_options options;
+    rc = build_template_options( & options, template );
+    if ( rc != 0 ) {
+        perror("chronos_build_template");
+        return rc;
+    }
+
 	struct index_entry entry;
 
 	for(;;){
@@ -245,7 +292,7 @@ static int do_iterate( int argc, char** argv, ui_iterator ui_iter ){
 		if( rc != 0 ){
 			break;
 		}
-		ui_iter( argc, argv, & handle, & entry );
+		ui_iter( & options, & handle, & entry );
 	}
 
 	if( rc == C_NO_MORE_ELEMENTS ){
@@ -257,45 +304,40 @@ static int do_iterate( int argc, char** argv, ui_iterator ui_iter ){
 	return rc;
 }
 
-void list_iter( int argc, char** argv, struct chronos_handle * handle, struct index_entry * entry ){
-	char buffer[1024];
-	format_key( buffer, sizeof(buffer), & entry->key );
-	printf("%s\n", buffer);
-}
-int list( int argc, char** argv ){
-	return do_iterate( argc, argv, & list_iter );
-}
+void full_iter(struct template_options* options, struct chronos_handle * handle, struct index_entry * entry ){
+	char format_buffer[128]; // big enough buffer for everything.
+    int key_format_length = 0;
+    if ( options->has_key_formatted ) {
+        key_format_length = format_key( format_buffer, sizeof(format_buffer), & entry->key );
+    }
 
-void full_iter( int argc, char** argv, struct chronos_handle * handle, struct index_entry * entry ){
-	char buffer[1024];
-	int length = format_key( buffer, sizeof(buffer), & entry->key );
+    char seconds_buffer[32];
+    int key_seconds_length = 0;
+    if ( options->has_key_seconds ) {
+        key_seconds_length = sprintf( seconds_buffer, "%d", entry->key.seconds );
+    }
 
 	int rc = 0;
 
-	char * out = argv[3];
-	size_t len = strlen(out);
-
-	for(int i=0; i < len; i++){
-		if( out[i] == '%' ){
+	for(int i=0; i < options->template_length; i++){
+		if( options->template[i] == '%' ){
 			i++; // consume the char, this is an escape code
-			switch( out[i] ){
+			switch( options->template[i] ){
 				case '%':
 					rc = write( 1, "%", 1 );
 					break;
 				case 'k':
-					rc = write( 1, buffer, length );
+					rc = write( 1, format_buffer, key_format_length );
 					break;
+                case 's':
+                    rc = write( 1, seconds_buffer, key_seconds_length );
+                    break;
 				case 'v':
 					rc = chronos_output( handle, entry, 1 );
 					break;
-				default:
-					// this is undefined behaviour
-					fprintf( stderr, "bad format string at index %d: %s\n", i, out );
-					rc = -1;
-					break;
 			}
 		} else {
-			rc = write( 1, out + i, 1 );
+			rc = write( 1, options->template + i, 1 );
 		}
 		if( rc == -1 ){
 			perror("chronos iterate print");
@@ -308,7 +350,11 @@ int iterate( int argc, char** argv ){
 		fprintf( stderr, "insufficient arguments, print-format required\n");
 		return 1;
 	}
-	return do_iterate( argc, argv, & full_iter );
+	return do_iterate( argv[2], argv[3], & full_iter );
+}
+
+int list( int argc, char** argv ){
+	return do_iterate( argv[2], "%k\n", & full_iter );
 }
 
 // commands for the cli interface
