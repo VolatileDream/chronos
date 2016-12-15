@@ -42,6 +42,7 @@ static int usage( int argc, char** argv ){
 	printf(" iterate <directory> print-format\n");
 	printf("   print-format: a string of what to output\n");
 	printf("     %%k - outputs the key\n");
+	printf("     %%s - outputs the key as seconds since epoch\n");
 	printf("     %%v - outputs the content\n");
 	printf("     %%%% - outputs a literal %%\n");
 	
@@ -316,7 +317,7 @@ void full_iter(struct template_options* options, struct chronos_handle * handle,
     char seconds_buffer[32];
     int key_seconds_length = 0;
     if ( options->has_key_seconds ) {
-        key_seconds_length = sprintf( seconds_buffer, "%d", entry->key.seconds );
+        key_seconds_length = snprintf( seconds_buffer, sizeof(seconds_buffer), "%d", entry->key.seconds );
     }
 
 	int rc = 0;
