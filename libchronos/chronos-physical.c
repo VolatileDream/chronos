@@ -9,7 +9,7 @@
 #include <errno.h>
 
 // copies everything from 'fd_from' and writes it to 'fd_to'
-static int copy_fd( int fd_from, int fd_to, loff_t offset, uint32_t *out_size ){
+static int copy_fd( int fd_from, int fd_to, off_t offset, uint32_t *out_size ){
 
 	uint32_t length = 0;
 
