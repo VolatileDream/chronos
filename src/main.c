@@ -42,7 +42,8 @@ static int usage( int argc, char** argv ){
 	printf(" iterate <directory> print-format\n");
 	printf("   print-format: a string of what to output\n");
 	printf("     %%k - outputs the key\n");
-	printf("     %%s - outputs the key as seconds since epoch\n");
+	printf("     %%s - outputs the key as 'seconds.nanos' since epoch\n");
+	printf("        - nanoseconds are padded with zeros to 9 digits\n");
 	printf("     %%v - outputs the content\n");
 	printf("     %%%% - outputs a literal %%\n");
 	
@@ -314,10 +315,17 @@ void full_iter(struct template_options* options, struct chronos_handle * handle,
         key_format_length = format_key( format_buffer, sizeof(format_buffer), & entry->key );
     }
 
+    // Enough space for str the string length of 2^64 (~20) for seconds + nanoseconds (10) + dot + null byte.
     char seconds_buffer[32];
     int key_seconds_length = 0;
     if ( options->has_key_seconds ) {
         key_seconds_length = snprintf( seconds_buffer, sizeof(seconds_buffer), "%d", entry->key.seconds );
+        key_seconds_length +=
+                snprintf(
+                        seconds_buffer + key_seconds_length,
+                        sizeof(seconds_buffer) - key_seconds_length,
+                        ".%09u",
+                        entry->key.nanos );
     }
 
 	int rc = 0;
