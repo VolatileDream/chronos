@@ -37,6 +37,8 @@ struct chronos_handle {
 	int dir_fd;
 	int index_fd;
 	int data_fd;
+  int32_t cached_count;
+  int32_t cached_data_len;
 };
 
 // Opens (and possibly creates) a chronos event log.
@@ -73,7 +75,9 @@ int chronos_open( const char * dir, enum chronos_flags flags, struct chronos_han
 int chronos_close( struct chronos_handle * handle );
 
 // Get data about the chronos event log
-int chronos_stat( struct chronos_handle * handle, int * out_entry_count, uint32_t * out_data_size );
+//
+// Also updates the chronos_handle->cached_count and chronos_handle->cached_data_len fields.
+int chronos_stat( struct chronos_handle * handle, int32_t * out_entry_count, int32_t * out_data_size );
 
 struct index_key {
 	uint32_t seconds; // seconds past epoch

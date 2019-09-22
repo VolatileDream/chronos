@@ -63,7 +63,7 @@ int chronos_append( struct chronos_handle * handle, struct index_key * maybe_key
 
 	int rc;
 
-	uint32_t size = 0;
+	int32_t size = 0;
 	rc = chronos_stat( handle, NULL, & size );
 	if( rc != 0 ){
 		return rc;
@@ -146,8 +146,7 @@ int chronos_entry( struct chronos_handle * handle, int entry_number, struct inde
 		return rc;
 	}
 
-	int count = 0;
-
+	int32_t count = 0;
 	rc = chronos_stat( handle, & count, NULL );
 	if( rc != 0 ){
 		return rc;
@@ -188,8 +187,7 @@ int chronos_entry( struct chronos_handle * handle, int entry_number, struct inde
 
 int chronos_iterate( struct chronos_handle * handle, struct chronos_iterator * out_iter ){
 
-	int count = 0;
-
+	int32_t count = 0;
 	int rc = chronos_stat( handle, & count, NULL );
 	if( rc != 0 ){
 		return rc;

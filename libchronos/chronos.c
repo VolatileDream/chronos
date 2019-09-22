@@ -242,6 +242,8 @@ int chronos_open( const char * dir, enum chronos_flags flags, struct chronos_han
 		.dir_fd = dir_fd,
 		.index_fd = INVALID_FD,
 		.data_fd = INVALID_FD,
+    .cached_count = -1,
+    .cached_data_len = -1,
 	};
 
 	rc = get_dir_lock( & local_handle );
@@ -340,7 +342,7 @@ int chronos_output( struct chronos_handle * handle, struct index_entry * entry, 
 	return 0;
 }
 
-int chronos_stat( struct chronos_handle * handle, int * out_entry_count, uint32_t * out_data_size ){
+int chronos_stat( struct chronos_handle * handle, int32_t * out_entry_count, int32_t * out_data_size ){
 
 	// neither of these fstat commands should fail,
 	// not if the accompanying open worked. But we assume
@@ -358,8 +360,8 @@ int chronos_stat( struct chronos_handle * handle, int * out_entry_count, uint32_
 		if( rc != 0 ){
 			return C_STAT_ERROR;
 		}
-
-		*out_entry_count = stat_buf.st_size / sizeof(struct index_entry);
+    handle->cached_count = stat_buf.st_size / sizeof(struct index_entry);
+		*out_entry_count = handle->cached_count;
 	}
 
 	if( out_data_size != NULL ){
@@ -376,7 +378,8 @@ int chronos_stat( struct chronos_handle * handle, int * out_entry_count, uint32_
 			return C_STAT_ERROR;
 		}
 
-		*out_data_size = stat_buf.st_size;
+    handle->cached_data_len = stat_buf.st_size;
+		*out_data_size = handle->cached_data_len;
 	}
 
 	return 0;
