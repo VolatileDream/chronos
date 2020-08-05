@@ -60,14 +60,14 @@ static int key_is_later( struct chronos_handle * handle, struct index_key * prov
 }
 
 int chronos_append( struct chronos_handle * handle, struct index_key * maybe_key, int fd_in ){
-
 	int rc;
 
-	int32_t size = 0;
-	rc = chronos_stat( handle, NULL, & size );
+	rc = chronos_maybe_stat(handle);
 	if( rc != 0 ){
 		return rc;
 	}
+	int32_t size = handle->cached_data_len;
+  handle->cached_data_len = -1; // reset cached length, we're going to change it.
 
 	// index entry that we're going to write
 	struct index_entry entry;
@@ -91,6 +91,7 @@ int chronos_append( struct chronos_handle * handle, struct index_key * maybe_key
 	// update the length of the entry, based on the data we have written to
 	// the data file.
 	entry.length = total_length;
+  handle->cached_data_len = size + total_length; // successfully wrote to the data file.
 
 	// check the key, this ensures that timestamps ~= time done writing
 	if( maybe_key ){
@@ -116,6 +117,10 @@ int chronos_append( struct chronos_handle * handle, struct index_key * maybe_key
 		return rc;
 	}
 
+  // Before attempting to write the key, reset the cached count because we've changed it.
+  int32_t count = handle->cached_count;
+  handle->cached_count = -1;
+
 	// since we might be on a little/big endian platform we have to sync to
 	// a platform agnostic data format (libc worries about this for us).
 
@@ -128,6 +133,8 @@ int chronos_append( struct chronos_handle * handle, struct index_key * maybe_key
 	if( rc == -1 ){
 		return C_IO_WRITE_ERROR;
 	}
+
+  handle->cached_count = count + 1; // successfully wrote the entry.
 
 #ifndef USE_UNSAFE_IO
 
@@ -146,11 +153,13 @@ int chronos_entry( struct chronos_handle * handle, int entry_number, struct inde
 		return rc;
 	}
 
-	int32_t count = 0;
-	rc = chronos_stat( handle, & count, NULL );
-	if( rc != 0 ){
+  // handle doesn't have cached info in it. Go fetch it.
+  rc = chronos_maybe_stat(handle);
+  if( rc != 0 ){
 		return rc;
-	}
+  }
+
+	int32_t count = 0;
 
 	if( entry_number < 0 ){
 		entry_number += count;
@@ -186,20 +195,30 @@ int chronos_entry( struct chronos_handle * handle, int entry_number, struct inde
 }
 
 int chronos_iterate( struct chronos_handle * handle, struct chronos_iterator * out_iter ){
-
-	int32_t count = 0;
-	int rc = chronos_stat( handle, & count, NULL );
+	int rc = chronos_maybe_stat(handle);
 	if( rc != 0 ){
 		return rc;
 	}
 
 	out_iter->index_position = 0;
-	out_iter->index_size = count;
+	out_iter->index_size = handle->cached_count;
 
 	return 0;
 }
 
 int chronos_iterate_next( struct chronos_handle * handle, struct chronos_iterator * iter, struct index_entry * out ){
+
+  if (iter->index_position >= iter->index_size) {
+    // because this was generated using cached fields, maybe the data is
+    // larger than the initial value we got for index size. We need to double
+    // check to be sure, we do this by refreshing the cached data, and the
+    // iterator size.
+    int rc = chronos_stat(handle, &handle->cached_count, &handle->cached_data_len);
+    if (rc != 0) {
+      return rc;
+    }
+    iter->index_size = handle->cached_count;
+  }
 
 	if( iter->index_position >= iter->index_size ){
 		return C_NO_MORE_ELEMENTS;

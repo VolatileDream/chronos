@@ -79,6 +79,9 @@ int chronos_close( struct chronos_handle * handle );
 // Also updates the chronos_handle->cached_count and chronos_handle->cached_data_len fields.
 int chronos_stat( struct chronos_handle * handle, int32_t * out_entry_count, int32_t * out_data_size );
 
+// Runs chronos_stat if the cached_* fields of the handle aren't set.
+int chronos_maybe_stat(struct chronos_handle *handle);
+
 struct index_key {
 	uint32_t seconds; // seconds past epoch
 	uint32_t nanos; // nanoseconds past epoch, discounting seconds

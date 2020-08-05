@@ -106,14 +106,13 @@ static int do_open_func( int argc, char** argv, open_func func ){
 }
 
 static int do_count( struct chronos_handle * handle, int argc, char** argv ){
-	int32_t count;
-	int rc = chronos_stat( handle, & count, NULL );
+	int rc = chronos_maybe_stat(handle);
 	if( rc != 0 ){
 		perror("chronos_stat");
 		return rc;
 	}
 
-	printf("%d\n", count );
+	printf("%d\n", handle->cached_count);
 
 	return 0;
 }

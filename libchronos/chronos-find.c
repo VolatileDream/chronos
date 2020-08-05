@@ -39,19 +39,17 @@ static int find( struct chronos_handle * handle, struct index_key * key, int cou
 }
 
 int chronos_find( struct chronos_handle * handle, struct index_key * key, struct index_entry * out_entry ){
-
-	int entry_count = 0;
-	int rc = chronos_stat( handle, & entry_count, NULL );
+	int rc = chronos_maybe_stat(handle);
 	if( rc != 0 ){
 		return rc;
 	}
 
 	// this case causes mmap to error
-	if( entry_count == 0 ){
+	if( handle->cached_count == 0 ){
 		return C_NOT_FOUND;
 	}
 
-	int index = find( handle, key, entry_count );
+	int index = find( handle, key, handle->cached_count );
 	if( index >= 0 ){
 		rc = chronos_entry( handle, index, out_entry );
 	} else {

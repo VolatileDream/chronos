@@ -342,6 +342,22 @@ int chronos_output( struct chronos_handle * handle, struct index_entry * entry, 
 	return 0;
 }
 
+int chronos_maybe_stat(struct chronos_handle *handle) {
+  int32_t *pcount = NULL;
+  int32_t *psize = NULL;
+  int32_t count = 0;
+  int32_t size = 0;
+
+  if (handle->cached_count < 0) {
+    pcount = &count;
+  }
+  if (handle->cached_data_len < 0) {
+    psize = &size;
+  }
+
+  return chronos_stat(handle, pcount, psize);
+}
+
 int chronos_stat( struct chronos_handle * handle, int32_t * out_entry_count, int32_t * out_data_size ){
 
 	// neither of these fstat commands should fail,
