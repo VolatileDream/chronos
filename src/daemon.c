@@ -29,6 +29,7 @@
 #include <signal.h>
 
 static int usage( int argc, char** argv ){
+  (void) argc;
 	printf("usage: %s <command> [args ...] \n\n", argv[0] );
 
 	printf("Commands:\n");
@@ -46,22 +47,25 @@ static int usage( int argc, char** argv ){
 	return 0;
 }
 
-#define get_fifo_name( buffer, len, dir ) \
-	get_name( buffer, len, dir, "%s/daemon-fifo" )
-
-#define get_pid_name( buffer, len, dir ) \
-	get_name( buffer, len, dir, "%s/daemon-pid" )
-
 static int get_name( char* buffer, size_t len, char* directory, char * format ){
 	return snprintf(buffer, len, format, directory );
 }
 
+static int get_fifo_name( char* buffer, size_t len, char* dir ) {
+	return get_name( buffer, len, dir, "%s/daemon-fifo" );
+}
+
+static int get_pid_name( char* buffer, size_t len, char* dir ) {
+	return get_name( buffer, len, dir, "%s/daemon-pid" );
+}
+
 static int do_stop( int argc, char ** argv ){
+  (void) argc;
 	char* dir = argv[2];
 
 	char pid_name[PATH_BUFFER_SIZE];
-	int rc = get_pid_name( pid_name, sizeof(pid_name), dir );
-	if( rc >= sizeof(pid_name) ){
+	ssize_t rc = get_pid_name( pid_name, sizeof(pid_name), dir );
+	if( rc >= (ssize_t)sizeof(pid_name) ){
 		return rc;
 	}
 
@@ -106,6 +110,7 @@ static int copy_fd( int fd_from, int fd_to ){
 }
 
 static int do_append( int argc, char ** argv ){
+  (void) argc;
 
 	char* dir = argv[2];
 
@@ -115,7 +120,7 @@ static int do_append( int argc, char ** argv ){
 	int rc = get_fifo_name( fifo_name, sizeof(fifo_name), dir );
 
 	// truncated output	
-	if( rc >= sizeof(fifo_name) ){
+	if( rc >= (int)sizeof(fifo_name) ){
 		return rc;
 	}
 
@@ -144,6 +149,7 @@ static int do_append( int argc, char ** argv ){
 static char fifo_name[ PATH_BUFFER_SIZE ];
 
 static void term_handle( int sig ){
+  (void) sig;
 #ifdef DEBUG
 	int rc = write( 1, "unlink\n", 7 );
 	(void)rc;
@@ -169,6 +175,7 @@ static void setup_signal_handler(){
 }
 
 static int do_daemon( int argc, char** argv ){
+  (void) argc;
 
 	char* dir = argv[2];
 	struct chronos_handle handle;
@@ -182,13 +189,13 @@ static int do_daemon( int argc, char** argv ){
 	// insert the chronos directory that we want, and then the fifo file
 	rc = get_fifo_name( fifo_name, sizeof(fifo_name), dir );
 	// truncated output	
-	if( rc >= sizeof(fifo_name) ){
+	if( rc >= (int)sizeof(fifo_name) ){
 		return rc;
 	}
 
 	char pid_file [ PATH_BUFFER_SIZE ];
 	rc = get_pid_name( pid_file, sizeof(pid_file), dir );
-	if( rc >= sizeof(pid_file) ){
+	if( rc >= (int)sizeof(pid_file) ){
 		return rc;
 	}
 
@@ -271,7 +278,7 @@ int main(int argc, char** argv){
 
 	char* command = argv[1];
 
-	for( int i=0; i < sizeof( commands ) / sizeof( command_t ); i++ ){
+	for( size_t i=0; i < sizeof( commands ) / sizeof( command_t ); i++ ){
 		// 10 because it should be longer than any command name in commands
 		if( strncmp( command, commands[i].name, 10 ) == 0 ){
 			return (*commands[i].func)( argc, argv );

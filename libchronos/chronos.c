@@ -480,7 +480,7 @@ int parse_nanoseconds( char * str, int length, uint32_t * out_value ){
 
 	// check that the nanoseconds are within the expected range.
 	// if the value is too big, it's incorrect.
-	if( 0 <= out && out <= 999999999 ){
+	if( out <= 999999999 ){
 		return 0;
 	} else {
 		return 1;
@@ -490,6 +490,7 @@ int parse_nanoseconds( char * str, int length, uint32_t * out_value ){
 #include <stdlib.h>
 
 int parse_key( char * str, int length, struct index_key * out_key ){
+  (void) length; // unused
 
 	struct tm time;
 

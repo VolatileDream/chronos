@@ -39,9 +39,9 @@ int pid_file_create( char* file_name ){
 
 	pid_t pid = getpid();
 
-	int pid_size = snprintf( pid_buffer, sizeof(pid_buffer), "%d\n", pid );
+	ssize_t pid_size = snprintf( pid_buffer, sizeof(pid_buffer), "%d\n", pid );
 
-	if( pid_size >= sizeof(pid_buffer) ){
+	if( pid_size >= (ssize_t)sizeof(pid_buffer) ){
 		// something was wrong with our buffer size allocation logic.
 		// this was a compile time error. :(
 		ret = PID_WRITE;

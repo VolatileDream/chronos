@@ -16,6 +16,7 @@
 #include <stdbool.h>
 
 static int usage( int argc, char** argv ){
+  (void) argc;
 	printf("usage: %s <command> [args ...] \n\n", argv[0] );
 
 	printf("Commands:\n");
@@ -66,6 +67,7 @@ static void bad_key( int rc, char * key ){
 }
 
 static int init( int argc, char** argv ){
+  (void) argc; // unused
 
 	char * dir = argv[2];
 
@@ -106,6 +108,8 @@ static int do_open_func( int argc, char** argv, open_func func ){
 }
 
 static int do_count( struct chronos_handle * handle, int argc, char** argv ){
+  (void) argc;
+  (void) argv;
 	int rc = chronos_maybe_stat(handle);
 	if( rc != 0 ){
 		perror("chronos_stat");
@@ -122,6 +126,7 @@ static int count( int argc, char** argv ){
 }
 
 static int do_get( struct chronos_handle * handle, int argc, char** argv ){
+  (void) argc;
 	struct index_key key;
 	int rc = parse_key( argv[3], strlen( argv[3] ), & key );
 	if( rc != 0 ){
@@ -200,6 +205,8 @@ static int append( int argc, char** argv ){
 }
 
 static int do_last( struct chronos_handle * handle, int argc, char** argv ){
+  (void) argc;
+  (void) argv;
 	struct index_entry entry;
 
 	int rc = chronos_entry( handle, -1, & entry );
@@ -364,6 +371,7 @@ int iterate( int argc, char** argv ){
 }
 
 int list( int argc, char** argv ){
+  (void) argc;
 	return do_iterate( argv[2], "%k\n", & full_iter );
 }
 
@@ -398,7 +406,7 @@ int main(int argc, char** argv){
 
 	char* command = argv[1];
 
-	for( int i=0; i < sizeof( commands ) / sizeof( command_t ); i++ ){
+	for( long unsigned int i=0; i < sizeof( commands ) / sizeof( command_t ); i++ ){
 		// 10 because it should be longer than any command name in commands
 		if( strncmp( command, commands[i].name, 10 ) == 0 ){
 			return (*commands[i].func)( argc, argv );

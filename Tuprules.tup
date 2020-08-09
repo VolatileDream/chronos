@@ -3,6 +3,7 @@ LINKER = ld
 
 CFLAGS += -Wall
 CFLAGS += -Werror
+CFLAGS += -Wextra
 CFLAGS += -fpic
 ifeq (@(DEBUG),yes)
 	CFLAGS += -g
