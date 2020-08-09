@@ -21,7 +21,7 @@ endif
 
 LIBS += -lrt
 
-!cc = |> $(COMPILER) -std=c99 $(CFLAGS) $(FLAGS) -c %f -o %o |> %B.o
+!cc = |> $(COMPILER) -std=c11 $(CFLAGS) $(FLAGS) -c %f -o %o |> %B.o
 !lib = |> $(LINKER) --relocatable %f -o %o |>
 !prog = |> $(COMPILER) %f $(FLAGS) $(LD_FLAGS) $(LIBS) -o %o |> 
 
