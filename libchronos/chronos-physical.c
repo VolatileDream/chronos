@@ -159,8 +159,7 @@ int chronos_entry( struct chronos_handle * handle, int entry_number, struct inde
 		return rc;
   }
 
-	int32_t count = 0;
-
+	int32_t count = handle->cached_count;
 	if( entry_number < 0 ){
 		entry_number += count;
 	}
