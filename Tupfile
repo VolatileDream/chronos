@@ -3,6 +3,7 @@ include_rules
 
 : src/main.o libchronos/libchronos.a |> !prog |> chronos
 : src/daemon.o libpid/libpid.a libchronos/libchronos.a |> !prog |> chronosd
+: src/c-yes.o |> !prog |> c-yes
 
-: | tests/*.test tests/run tests/lib chronos chronosd |> tests/run tests/ %o |> tests/test-report.txt
+: | c-yes tests/*.test tests/run tests/lib chronos chronosd |> tests/run tests %o |> tests/test-report.txt
 

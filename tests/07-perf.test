@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+
+source "$TEST_DIR/lib"
+
+start(){
+	err ./chronosd daemon "$DIR"
+	./chronosd daemon "$DIR" &
+	PID=$!
+	_assert [ $PID -ne 0 ]
+	SECONDS=0
+	START_TIME=0
+	if [ ! -p "$FIFO" ]; then
+		# give chronosd a moment to start up
+		sleep 0.01
+	fi
+	_assert [ -p "$FIFO" ]
+	_assert [ -f "$PIDF" ]
+	local pid=`cat "$PIDF" `
+	_assert [ "$PID" = "$pid" ]
+}
+
+stop(){
+	err ./chronosd stop "$DIR"
+	./chronosd stop "$DIR"
+	_assert [ ! -p "$FIFO" ]
+	_assert [ ! -f "$PIDF" ]
+	# in case it doesn't actually manage it,
+	# because otherwise tup has serious problems
+	if [ -p "$FIFO" ]; then
+		rm "$FIFO"
+	fi
+	PID=0
+}
+
+start-write(){
+    err ./c-yes "$FIFO"
+    ./c-yes "$FIFO" > /dev/null 2> /dev/null &
+    WPID=$!
+    _assert [ -n "$WPID" ]
+    _assert [ $WPID -ne 0 ]
+}
+
+kill-write(){
+    kill -SIGINT $WPID
+    sleep 0.1
+    kill -SIGTERM $WPID
+    WPID=0
+}
+
+num-entry() {
+    ./chronos count "$DIR" | tr -d "\n"
+}
+
+avg-rate(){
+    local time=$1 ; shift
+    ( num-entry ; echo " / $time " ) | bc
+}
+
+DIR="$TEST_DIR/init.d"
+FIFO="$DIR/daemon-fifo"
+PIDF="$DIR/daemon-pid"
+
+_assert ./chronos init "$DIR"
+
+run-for(){
+    local time=$1 ; shift
+    start
+    start-write
+    sleep $time
+    kill-write
+    stop 
+    echo -n "Average rate (${time}s): " ; avg-rate $time
+    echo -n "Number of entries: " ; num-entry
+}
+
+# check 2, 3, 5, 10s
+run-for 1
+#run-for 3
+#run-for 5
+#run-for 10
+
+rm -r "$DIR"
