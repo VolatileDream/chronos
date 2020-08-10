@@ -1,5 +1,5 @@
 err(){
-	echo "$@" >&2 ; #>> /dev/stderr
+	echo "$@" >&2
 }
 
 no(){
@@ -35,8 +35,9 @@ _assert(){
 	if [ $# -ne 0 ]; then
 		err "$@"
 		"$@"
-		if [ $? -ne 0 ]; then
-			err "ERROR assertion failed: $@"
+    local rc=$?
+		if [ $rc -ne 0 ]; then
+			err "ERROR assertion failed ($rc): $@"
 		fi
 	fi
 }
